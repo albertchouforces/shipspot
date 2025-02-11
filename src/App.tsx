@@ -13,6 +13,7 @@ function App() {
   const [showAnswer, setShowAnswer] = useState(false)
   const [userProgress, setUserProgress] = useState<{ [key: string]: Marker[] }>({})
   const [isHandToolActive, setIsHandToolActive] = useState(false)
+  const [markerSize, setMarkerSize] = useState(24) // Default marker size
   const imageViewerRef = useRef<{ handleResetZoom: () => void } | null>(null)
 
   // Initialize with first scenario, load user progress, and set initial equipment
@@ -26,6 +27,11 @@ function App() {
     if (savedScenarios) {
       const parsedScenarios = JSON.parse(savedScenarios)
       setScenarios(parsedScenarios)
+    }
+
+    const savedMarkerSize = localStorage.getItem('shipMarkerSize')
+    if (savedMarkerSize) {
+      setMarkerSize(Number(savedMarkerSize))
     }
 
     // Set initial scenario
@@ -52,6 +58,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem('shipScenarios', JSON.stringify(scenarios))
   }, [scenarios])
+
+  // Save marker size to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('shipMarkerSize', String(markerSize))
+  }, [markerSize])
 
   const getCurrentMarkers = () => {
     if (!currentScenario) return []
@@ -97,7 +108,12 @@ function App() {
   }
 
   const handleToggleAnswer = () => {
-    setShowAnswer(!showAnswer)
+    setShowAnswer(prev => !prev)
+  }
+
+  const handleScenarioSelect = (scenario: Scenario) => {
+    setCurrentScenario(scenario)
+    setShowAnswer(false)
   }
 
   const handleZoomPanChange = (isZoomedOrPanned: boolean) => {
@@ -113,12 +129,20 @@ function App() {
     }
   }
 
+  const handleMarkerSizeChange = (size: number) => {
+    setMarkerSize(size)
+  }
+
+  const handleResetMarkerSize = () => {
+    setMarkerSize(24) // Reset to default size
+  }
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar
         scenarios={scenarios}
         currentScenario={currentScenario}
-        onScenarioSelect={setCurrentScenario}
+        onScenarioSelect={handleScenarioSelect}
         selectedEquipment={selectedEquipment}
         setSelectedEquipment={setSelectedEquipment}
         showAnswer={showAnswer}
@@ -126,6 +150,9 @@ function App() {
         onDisableHandTool={() => setIsHandToolActive(false)}
         isHandToolActive={isHandToolActive}
         onResetZoom={handleResetZoom}
+        markerSize={markerSize}
+        onMarkerSizeChange={handleMarkerSizeChange}
+        onResetMarkerSize={handleResetMarkerSize}
       />
       <main className="flex-1 p-6">
         {currentScenario ? (
@@ -141,6 +168,8 @@ function App() {
             isHandToolActive={isHandToolActive}
             onHandToolToggle={setIsHandToolActive}
             onZoomPanChange={handleZoomPanChange}
+            onToggleAnswer={handleToggleAnswer}
+            markerSize={markerSize}
           />
         ) : (
           <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">

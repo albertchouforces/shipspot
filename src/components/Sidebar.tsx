@@ -1,5 +1,5 @@
 import { Equipment, Scenario } from '../types'
-import { Eye, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { useState } from 'react'
 
@@ -14,6 +14,9 @@ interface SidebarProps {
   onDisableHandTool?: () => void
   isHandToolActive?: boolean
   onResetZoom?: () => void
+  markerSize: number
+  onMarkerSizeChange: (size: number) => void
+  onResetMarkerSize: () => void
 }
 
 import { equipmentTypes } from '../data/equipment'
@@ -24,11 +27,12 @@ const Sidebar = ({
   onScenarioSelect,
   selectedEquipment,
   setSelectedEquipment,
-  showAnswer,
-  onToggleAnswer,
-  onDisableHandTool,
   isHandToolActive,
+  onDisableHandTool,
   onResetZoom,
+  markerSize,
+  onMarkerSizeChange,
+  onResetMarkerSize,
 }: SidebarProps) => {
   const [scenariosExpanded, setScenariosExpanded] = useState(true)
   const [equipmentExpanded, setEquipmentExpanded] = useState(true)
@@ -40,34 +44,26 @@ const Sidebar = ({
     : []
 
   const handleEquipmentSelect = (equipment: Equipment) => {
-    // First set equipment to null to avoid any side effects
     setSelectedEquipment(null)
-    
-    // Reset zoom if needed
     if (onResetZoom) {
       onResetZoom()
     }
-    
-    // Disable hand tool if active
     if (onDisableHandTool && isHandToolActive) {
       onDisableHandTool()
     }
-    
-    // Wait for zoom reset and hand tool disable to complete
     setTimeout(() => {
       setSelectedEquipment(equipment)
-    }, 300) // Increased delay to ensure smooth transition
+    }, 300)
   }
 
   const handleScenarioSelect = (scenario: Scenario) => {
     onScenarioSelect(scenario)
-    setSelectedEquipment(null) // Clear equipment selection first
+    setSelectedEquipment(null)
     
     if (onResetZoom) {
       onResetZoom()
     }
     
-    // Wait for zoom reset to complete before setting initial equipment
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
         scenario.availableEquipment.includes(eq.id)
@@ -111,52 +107,64 @@ const Sidebar = ({
           )}
         </div>
 
-        {currentScenario && (
-          <div className="px-2">
-            <button
-              onMouseDown={onToggleAnswer}
-              onMouseUp={onToggleAnswer}
-              onMouseLeave={showAnswer ? onToggleAnswer : undefined}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 active:bg-blue-600 active:text-white transition-colors text-sm"
-            >
-              <Eye size={16} />
-              <span>Hold to Show Answer</span>
-            </button>
-          </div>
-        )}
-
         {currentScenario && availableEquipment.length > 0 && (
-          <div className="border rounded-lg overflow-hidden shadow-sm">
-            <button
-              onClick={() => setEquipmentExpanded(!equipmentExpanded)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100"
-            >
-              <span className="font-medium text-sm text-gray-700">Equipment Types</span>
-              {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {equipmentExpanded && (
-              <div className="p-2 space-y-1">
-                {availableEquipment.map((equipment) => {
-                  const IconComponent = (Icons as any)[equipment.icon] || Icons.HelpCircle
-                  return (
-                    <button
-                      key={equipment.id}
-                      className={`w-full px-3 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 text-sm ${
-                        selectedEquipment?.id === equipment.id && !isHandToolActive
-                          ? 'bg-blue-100 text-blue-800 shadow-sm font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                      onClick={() => handleEquipmentSelect(equipment)}
-                    >
-                      <IconComponent size={16} style={{ color: equipment.color }} />
-                      <span className="truncate">{equipment.name}</span>
-                    </button>
-                  )
-                })}
+          <>
+            <div className="border rounded-lg overflow-hidden shadow-sm">
+              <button
+                onClick={() => setEquipmentExpanded(!equipmentExpanded)}
+                className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100"
+              >
+                <span className="font-medium text-sm text-gray-700">Equipment Types</span>
+                {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              
+              {equipmentExpanded && (
+                <div className="p-2 space-y-1">
+                  {availableEquipment.map((equipment) => {
+                    const IconComponent = (Icons as any)[equipment.icon] || Icons.HelpCircle
+                    return (
+                      <button
+                        key={equipment.id}
+                        className={`w-full px-3 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 text-sm ${
+                          selectedEquipment?.id === equipment.id && !isHandToolActive
+                            ? 'bg-blue-100 text-blue-800 shadow-sm font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleEquipmentSelect(equipment)}
+                      >
+                        <IconComponent size={16} style={{ color: equipment.color }} />
+                        <span className="truncate">{equipment.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="border rounded-lg overflow-hidden shadow-sm p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Marker Size</span>
+                <button
+                  onClick={onResetMarkerSize}
+                  className="p-1 text-gray-500 hover:text-blue-600 rounded-lg"
+                  title="Reset to default size"
+                >
+                  <RotateCcw size={16} />
+                </button>
               </div>
-            )}
-          </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="16"
+                  max="48"
+                  value={markerSize}
+                  onChange={(e) => onMarkerSizeChange(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+                <span className="text-xs text-gray-500 w-8">{markerSize}px</span>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

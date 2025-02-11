@@ -15,7 +15,7 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "https://images.unsplash.com/photo-1566552881560-0be862a7c445?auto=format&fit=crop&q=80&w=2000",
     answerImage: "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=2000",
     markers: [],
-    availableEquipment: [] // Only radio and anchor points for bridge
+    availableEquipment: ["first-aid"] // Only radio and anchor points for bridge
   },
   {
     id: "scenario3",

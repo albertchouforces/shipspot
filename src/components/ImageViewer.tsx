@@ -1,4 +1,4 @@
-import { Trash2, ZoomIn, ZoomOut, Maximize2, Hand } from 'lucide-react'
+import { Trash2, ZoomIn, ZoomOut, Maximize2, Hand, Eye } from 'lucide-react'
 import { Marker } from '../types'
 import MarkerComponent from './MarkerComponent'
 import { useState, useCallback, useRef, MouseEvent, useEffect, forwardRef, useImperativeHandle } from 'react'
@@ -24,6 +24,8 @@ interface ImageViewerProps {
   isHandToolActive: boolean
   onHandToolToggle: (active: boolean) => void
   onZoomPanChange?: (isZoomedOrPanned: boolean) => void
+  onToggleAnswer: () => void
+  markerSize?: number
 }
 
 export interface ImageViewerRef {
@@ -40,16 +42,22 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   onClearAll,
   isHandToolActive,
   onHandToolToggle,
-  onZoomPanChange
+  onZoomPanChange,
+  onToggleAnswer,
+  markerSize = 24
 }, ref) => {
+  // ... [Previous state declarations remain the same]
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null)
+  const [showToolbar, setShowToolbar] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
   const [startPanPosition, setStartPanPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
 
+  // ... [Rest of the existing functions remain the same]
   const isZoomedOrPanned = scale !== 1 || position.x !== 0 || position.y !== 0
 
   useEffect(() => {
@@ -125,27 +133,21 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     const image = imageRef.current
     const rect = container.getBoundingClientRect()
 
-    // Calculate the actual image dimensions and position after scaling
     const scaledImageWidth = image.width * scale
     const scaledImageHeight = image.height * scale
     
-    // Calculate the image position relative to the container
     const imageLeft = (rect.width - scaledImageWidth) / 2 + position.x
     const imageTop = (rect.height - scaledImageHeight) / 2 + position.y
 
-    // Calculate click position relative to the container
     const clickX = clientX - rect.left
     const clickY = clientY - rect.top
 
-    // Calculate click position relative to the scaled image
     const imageRelativeX = (clickX - imageLeft) / scale
     const imageRelativeY = (clickY - imageTop) / scale
 
-    // Convert to percentages
     const percentX = (imageRelativeX / image.width) * 100
     const percentY = (imageRelativeY / image.height) * 100
 
-    // Check if the click is within the image bounds
     if (percentX >= 0 && percentX <= 100 && percentY >= 0 && percentY <= 100) {
       return { x: percentX, y: percentY }
     }
@@ -175,39 +177,62 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
 
   const handleMouseLeave = () => {
     setIsDragging(false)
+    setShowToolbar(false)
   }
 
-  const handleZoomIn = () => {
+  const handleMouseEnter = () => {
+    setShowToolbar(true)
+  }
+
+  const handleZoomIn = (e: React.MouseEvent) => {
+    e.stopPropagation()
     const newScale = Math.min(scale * 1.2, 4)
     setScale(newScale)
     const constrainedPosition = constrainPosition(position.x, position.y)
     setPosition(constrainedPosition)
   }
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (e: React.MouseEvent) => {
+    e.stopPropagation()
     const newScale = Math.max(scale / 1.2, 1)
     setScale(newScale)
     const constrainedPosition = constrainPosition(position.x, position.y)
     setPosition(constrainedPosition)
   }
 
-  const handleResetZoom = () => {
+  const handleResetZoom = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
     setScale(1)
     setPosition({ x: 0, y: 0 })
   }
 
   useImperativeHandle(ref, () => ({
-    handleResetZoom
+    handleResetZoom: () => handleResetZoom()
   }))
 
-  const toggleHandTool = () => {
+  const toggleHandTool = (e: React.MouseEvent) => {
+    e.stopPropagation()
     onHandToolToggle(!isHandToolActive)
+  }
+
+  const handleToggleAnswer = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onToggleAnswer()
+  }
+
+  const handleClearAllClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onClearAll()
   }
 
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isHandToolActive || isDragging) return
-    e.preventDefault()
 
+    if (toolbarRef.current?.contains(e.target as Node)) {
+      return
+    }
+
+    e.preventDefault()
     const markerPosition = calculateMarkerPosition(e.clientX, e.clientY)
     if (markerPosition) {
       const syntheticEvent = {
@@ -230,50 +255,6 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
 
   return (
     <div className="relative h-full flex flex-col">
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        {markers.length > 0 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onClearAll()
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-red-600"
-          >
-            <Trash2 size={16} />
-            Clear All
-          </button>
-        )}
-      </div>
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
-        <button
-          onClick={handleZoomIn}
-          className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
-        >
-          <ZoomIn size={16} />
-        </button>
-        <button
-          onClick={handleZoomOut}
-          className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
-        >
-          <ZoomOut size={16} />
-        </button>
-        <button
-          onClick={handleResetZoom}
-          className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
-        >
-          <Maximize2 size={16} />
-        </button>
-        <button
-          onClick={toggleHandTool}
-          className={`p-2 border rounded-lg shadow-sm transition-colors ${
-            isHandToolActive 
-              ? 'bg-blue-100 border-blue-300 text-blue-700' 
-              : 'bg-white border-gray-200 hover:bg-gray-50'
-          }`}
-        >
-          <Hand size={16} />
-        </button>
-      </div>
       <div 
         ref={containerRef}
         className={`relative w-full h-full border rounded-lg overflow-hidden bg-white select-none ${
@@ -287,6 +268,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onMouseEnter={handleMouseEnter}
       >
         <div
           className="absolute w-full h-full transition-transform duration-100 ease-out select-none"
@@ -318,8 +300,75 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
               onRemove={onMarkerRemove}
               showAnswer={showAnswer}
               opacity={MARKERS_OPACITY}
+              size={markerSize}
             />
           ))}
+        </div>
+
+        {/* Floating Toolbar */}
+        <div
+          ref={toolbarRef}
+          className={`absolute left-1/2 -translate-x-1/2 bottom-4 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg transition-opacity duration-200 ${
+            showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <button
+            onClick={handleZoomIn}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Zoom In"
+          >
+            <ZoomIn size={20} />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Zoom Out"
+          >
+            <ZoomOut size={20} />
+          </button>
+          <button
+            onClick={handleResetZoom}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Reset Zoom"
+          >
+            <Maximize2 size={20} />
+          </button>
+          <button
+            onClick={toggleHandTool}
+            className={`p-2 rounded-lg transition-colors ${
+              isHandToolActive 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'hover:bg-gray-100'
+            }`}
+            title="Hand Tool"
+          >
+            <Hand size={20} />
+          </button>
+          <div className="w-px h-6 bg-gray-200" />
+          <button
+            onClick={handleToggleAnswer}
+            className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
+              showAnswer
+                ? 'bg-green-100 text-green-700'
+                : 'hover:bg-gray-100'
+            }`}
+            title="Show Answers"
+          >
+            <Eye size={20} />
+            <span className="text-sm font-medium">Show Answers</span>
+          </button>
+          {markers.length > 0 && (
+            <>
+              <div className="w-px h-6 bg-gray-200" />
+              <button
+                onClick={handleClearAllClick}
+                className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                title="Clear All Markers"
+              >
+                <Trash2 size={20} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
