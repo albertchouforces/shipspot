@@ -1,4 +1,4 @@
-import { Trash2, ZoomIn, ZoomOut, Maximize2, Hand, Eye } from 'lucide-react'
+import { Trash2, ZoomIn, ZoomOut, Maximize2, Hand, Eye, EyeOff } from 'lucide-react'
 import { Marker } from '../types'
 import MarkerComponent from './MarkerComponent'
 import { useState, useCallback, useRef, MouseEvent, useEffect, forwardRef, useImperativeHandle } from 'react'
@@ -57,7 +57,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   const [startPanPosition, setStartPanPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
 
-  // ... [Rest of the existing functions remain the same]
+  // ... [Previous functions remain the same]
   const isZoomedOrPanned = scale !== 1 || position.x !== 0 || position.y !== 0
 
   useEffect(() => {
@@ -254,7 +254,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   }
 
   return (
-    <div className="relative h-full flex flex-col">
+    <div className="relative h-full flex flex-col gap-4">
       <div 
         ref={containerRef}
         className={`relative w-full h-full border rounded-lg overflow-hidden bg-white select-none ${
@@ -305,70 +305,78 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
           ))}
         </div>
 
-        {/* Floating Toolbar */}
-        <div
-          ref={toolbarRef}
-          className={`absolute left-1/2 -translate-x-1/2 bottom-4 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg transition-opacity duration-200 ${
-            showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <button
-            onClick={handleZoomIn}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Zoom In"
-          >
-            <ZoomIn size={20} />
-          </button>
-          <button
-            onClick={handleZoomOut}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Zoom Out"
-          >
-            <ZoomOut size={20} />
-          </button>
-          <button
-            onClick={handleResetZoom}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Reset Zoom"
-          >
-            <Maximize2 size={20} />
-          </button>
-          <button
-            onClick={toggleHandTool}
-            className={`p-2 rounded-lg transition-colors ${
-              isHandToolActive 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'hover:bg-gray-100'
-            }`}
-            title="Hand Tool"
-          >
-            <Hand size={20} />
-          </button>
-          <div className="w-px h-6 bg-gray-200" />
+        {/* Persistent Show/Hide Answer Button */}
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-20">
           <button
             onClick={handleToggleAnswer}
-            className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transition-colors ${
               showAnswer
-                ? 'bg-green-100 text-green-700'
-                : 'hover:bg-gray-100'
+                ? 'bg-green-500 text-white hover:bg-green-600'
+                : 'bg-blue-500 text-white hover:bg-blue-600'
             }`}
-            title="Show Answers"
           >
-            <Eye size={20} />
-            <span className="text-sm font-medium">Show Answers</span>
+            {showAnswer ? <EyeOff size={20} /> : <Eye size={20} />}
+            <span className="text-sm font-medium">
+              {showAnswer ? 'Hide Answers' : 'Reveal Answers'}
+            </span>
           </button>
-          {markers.length > 0 && (
-            <>
-              <div className="w-px h-6 bg-gray-200" />
-              <button
-                onClick={handleClearAllClick}
-                className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                title="Clear All Markers"
-              >
-                <Trash2 size={20} />
-              </button>
-            </>
-          )}
+        </div>
+
+        {/* Floating Toolbar */}
+        <div className={`absolute left-1/2 -translate-x-1/2 bottom-4 transition-opacity duration-200 ${
+          showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}>
+          <div
+            ref={toolbarRef}
+            className="flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
+          >
+            <button
+              onClick={handleZoomIn}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Zoom In"
+            >
+              <ZoomIn size={20} />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Zoom Out"
+            >
+              <ZoomOut size={20} />
+            </button>
+            <button
+              onClick={handleResetZoom}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Reset Zoom"
+            >
+              <Maximize2 size={20} />
+            </button>
+            <button
+              onClick={toggleHandTool}
+              className={`p-2 rounded-lg transition-colors ${
+                isHandToolActive 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'hover:bg-gray-100'
+              }`}
+              title="Hand Tool"
+            >
+              <Hand size={20} />
+            </button>
+            
+            {markers.length > 0 && (
+              <>
+                <div className="w-px h-6 bg-gray-200" />
+                <button
+                  onClick={handleClearAllClick}
+                  className="flex items-center gap-2 p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                  title="Clear All Markers"
+                >
+                  <Trash2 size={20} />
+                  <span className="text-sm font-medium">Clear All Markers</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
