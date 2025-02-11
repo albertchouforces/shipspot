@@ -179,7 +179,7 @@ const Sidebar = ({
       </div>
 
       <div className="p-4 border-t bg-white">
-        <div className="text-[11px] text-gray-500 space-y-1">
+        <div className="text-[11px] text-gray-500 space-y-1 text-center">
           <p className="leading-relaxed">
             (Version 1.0) This is a professional development learning project. For more information please contact the Learning Support Centre Product Development Lead (Pacific) at{' '}
             <a 
