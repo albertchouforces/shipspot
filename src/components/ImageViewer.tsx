@@ -4,7 +4,7 @@ import MarkerComponent from './MarkerComponent'
 import { useState, useCallback, useRef, MouseEvent, useEffect, forwardRef, useImperativeHandle } from 'react'
 
 const ANSWER_OVERLAY_OPACITY = 1.0;
-const MARKERS_OPACITY = 0.3;
+const MARKERS_OPACITY = 0.5;
 
 interface ImageDimensions {
   width: number;
