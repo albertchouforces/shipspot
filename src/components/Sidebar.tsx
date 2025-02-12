@@ -88,7 +88,7 @@ const Sidebar = ({
   useEffect(() => {
     const sortedCategories = Object.keys(categorizedScenarios).sort()
     
-    setExpandedCategories(prev => {
+    setExpandedCategories(() => {
       const newState: { [key: string]: boolean } = {}
       
       // Set all categories to collapsed except the first one
@@ -112,7 +112,7 @@ const Sidebar = ({
           handleScenarioSelect(firstScenario)
           
           // Ensure only the first category is expanded
-          setExpandedCategories(prev => {
+          setExpandedCategories(() => {
             const newState: { [key: string]: boolean } = {}
             sortedCategories.forEach((category, index) => {
               newState[category] = index === 0
