@@ -118,6 +118,8 @@ const Sidebar = ({
     }))
   }
 
+  const hasScenarios = scenarios.length > 0
+
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
       <div className="p-4 border-b bg-white">
@@ -137,7 +139,7 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && Object.keys(categorizedScenarios).length > 0 && (
+            {scenariosExpanded && hasScenarios && (
               <div className="divide-y divide-gray-100">
                 {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
                   <div key={category} className="bg-white">
@@ -176,7 +178,7 @@ const Sidebar = ({
               </div>
             )}
             
-            {scenariosExpanded && Object.keys(categorizedScenarios).length === 0 && (
+            {scenariosExpanded && !hasScenarios && (
               <div className="p-4 text-sm text-gray-500 text-center">
                 No scenarios available
               </div>
