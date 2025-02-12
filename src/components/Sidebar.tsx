@@ -21,6 +21,12 @@ interface SidebarProps {
 
 import { equipmentTypes } from '../data/equipment'
 
+const STORAGE_KEYS = {
+  SCENARIOS_EXPANDED: 'shipspot_scenarios_expanded',
+  EQUIPMENT_EXPANDED: 'shipspot_equipment_expanded',
+  CATEGORIES_EXPANDED: 'shipspot_categories_expanded',
+}
+
 const Sidebar = ({
   scenarios,
   currentScenario,
@@ -34,17 +40,43 @@ const Sidebar = ({
   onMarkerSizeChange,
   onResetMarkerSize,
 }: SidebarProps) => {
-  const [scenariosExpanded, setScenariosExpanded] = useState(true)
-  const [equipmentExpanded, setEquipmentExpanded] = useState(true)
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
+  // Initialize states with localStorage values
+  const [scenariosExpanded, setScenariosExpanded] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
+    return saved ? JSON.parse(saved) : true
+  })
+  
+  const [equipmentExpanded, setEquipmentExpanded] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
+    return saved ? JSON.parse(saved) : true
+  })
+  
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
+    return saved ? JSON.parse(saved) : {}
+  })
 
-  const availableEquipment = currentScenario
-    ? equipmentTypes.filter(equipment => 
-        currentScenario.availableEquipment.includes(equipment.id)
-      )
-    : []
+  // Persist state changes to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SCENARIOS_EXPANDED, JSON.stringify(scenariosExpanded))
+  }, [scenariosExpanded])
 
-  // Group scenarios by category
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.EQUIPMENT_EXPANDED, JSON.stringify(equipmentExpanded))
+  }, [equipmentExpanded])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES_EXPANDED, JSON.stringify(expandedCategories))
+  }, [expandedCategories])
+
+  const availableEquipment = useMemo(() => {
+    if (!currentScenario?.availableEquipment) return []
+    return equipmentTypes.filter(equipment => 
+      currentScenario.availableEquipment.includes(equipment.id)
+    )
+  }, [currentScenario])
+
+  // Group scenarios by category with memoization
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
@@ -57,33 +89,35 @@ const Sidebar = ({
     return grouped
   }, [scenarios])
 
-  // Initialize and update expanded categories whenever scenarios change
+  // Initialize expanded categories
   useEffect(() => {
     const categories = Object.keys(categorizedScenarios)
     
-    // Keep existing expanded states while adding new categories
     setExpandedCategories(prev => {
-      const newState: { [key: string]: boolean } = {}
+      const newState = { ...prev }
       
-      // First, copy over existing states
+      // Ensure all categories have a state
       categories.forEach(category => {
-        // If category existed before, keep its state, otherwise default to true
-        newState[category] = category in prev ? prev[category] : true
+        if (!(category in newState)) {
+          // If this is the category of the current scenario, expand it
+          newState[category] = currentScenario?.category === category
+        }
       })
       
-      // If this is initial load (no previous states) and we have categories,
-      // set all to false except the first one
-      if (Object.keys(prev).length === 0 && categories.length > 0) {
-        categories.forEach((category, index) => {
-          newState[category] = index === 0
-        })
-      }
+      // Clean up any categories that no longer exist
+      Object.keys(newState).forEach(category => {
+        if (!categories.includes(category)) {
+          delete newState[category]
+        }
+      })
       
       return newState
     })
-  }, [categorizedScenarios]) // Run whenever categories change
+  }, [categorizedScenarios, currentScenario])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
+    if (!equipment) return
+    
     setSelectedEquipment(null)
     if (onResetZoom) {
       onResetZoom()
@@ -91,12 +125,16 @@ const Sidebar = ({
     if (onDisableHandTool && isHandToolActive) {
       onDisableHandTool()
     }
+    
+    // Small delay to ensure proper state reset
     setTimeout(() => {
       setSelectedEquipment(equipment)
-    }, 300)
+    }, 100)
   }
 
   const handleScenarioSelect = (scenario: Scenario) => {
+    if (!scenario) return
+    
     onScenarioSelect(scenario)
     setSelectedEquipment(null)
     
@@ -104,7 +142,7 @@ const Sidebar = ({
       onResetZoom()
     }
     
-    // Set the category of the selected scenario to expanded
+    // Ensure the category is expanded
     if (scenario.category) {
       setExpandedCategories(prev => ({
         ...prev,
@@ -112,25 +150,26 @@ const Sidebar = ({
       }))
     }
     
+    // Small delay to ensure proper state reset before selecting first equipment
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
-        scenario.availableEquipment.includes(eq.id)
+        scenario.availableEquipment?.includes(eq.id)
       )
       if (firstEquipment) {
         setSelectedEquipment(firstEquipment)
       }
-    }, 300)
+    }, 100)
   }
 
   const toggleCategory = (category: string) => {
+    if (!category) return
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
     }))
   }
 
-  // Render nothing if there are no scenarios
-  if (scenarios.length === 0) {
+  if (!Array.isArray(scenarios) || scenarios.length === 0) {
     return null
   }
 
@@ -155,7 +194,6 @@ const Sidebar = ({
             
             {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
               <div key={category} className="bg-white border-t first:border-t-0">
-                {/* Category Header */}
                 <button
                   onClick={() => toggleCategory(category)}
                   className="w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 border-blue-500/20"
@@ -167,24 +205,19 @@ const Sidebar = ({
                   }
                 </button>
                 
-                {/* Category Content */}
-                {expandedCategories[category] && (
-                  <div className="py-1 px-2">
-                    {categoryScenarios.map((scenario) => (
-                      <button
-                        key={scenario.id}
-                        className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
-                          currentScenario?.id === scenario.id
-                            ? 'bg-blue-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                        onClick={() => handleScenarioSelect(scenario)}
-                      >
-                        {scenario.title}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {expandedCategories[category] && categoryScenarios?.map((scenario) => (
+                  <button
+                    key={scenario.id}
+                    className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                      currentScenario?.id === scenario.id
+                        ? 'bg-blue-50 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleScenarioSelect(scenario)}
+                  >
+                    {scenario.title || 'Untitled Scenario'}
+                  </button>
+                ))}
               </div>
             ))}
           </div>
