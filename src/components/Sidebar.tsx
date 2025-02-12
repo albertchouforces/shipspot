@@ -46,26 +46,36 @@ const Sidebar = ({
 
   // Improved category handling that maintains source order
   const categorizedScenarios = useMemo(() => {
-    // Create a map to maintain category order
     const categoryMap = new Map<string, Scenario[]>()
     const categoryOrder: string[] = []
 
-    // First pass: collect categories in order of appearance
+    // First pass: collect all unique categories
     scenarios.forEach(scenario => {
-      const category = scenario.category?.trim() || 'Uncategorized'
-      if (!categoryMap.has(category)) {
-        categoryMap.set(category, [])
-        categoryOrder.push(category)
+      if (scenario.category && !categoryOrder.includes(scenario.category)) {
+        categoryOrder.push(scenario.category)
+        categoryMap.set(scenario.category, [])
       }
-      categoryMap.get(category)?.push(scenario)
+    })
+
+    // Add "Uncategorized" at the end if needed
+    if (!categoryOrder.includes('Uncategorized')) {
+      categoryOrder.push('Uncategorized')
+      categoryMap.set('Uncategorized', [])
+    }
+
+    // Second pass: populate scenarios into their categories
+    scenarios.forEach(scenario => {
+      const category = scenario.category || 'Uncategorized'
+      const existingScenarios = categoryMap.get(category) || []
+      categoryMap.set(category, [...existingScenarios, scenario])
     })
 
     // Convert to object while maintaining order
     const result: { [key: string]: Scenario[] } = {}
     categoryOrder.forEach(category => {
-      const scenarios = categoryMap.get(category)
-      if (scenarios && scenarios.length > 0) {
-        result[category] = scenarios
+      const scenariosInCategory = categoryMap.get(category)
+      if (scenariosInCategory && scenariosInCategory.length > 0) {
+        result[category] = scenariosInCategory
       }
     })
 
