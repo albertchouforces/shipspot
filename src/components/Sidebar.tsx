@@ -21,20 +21,24 @@ interface SidebarProps {
 
 import { equipmentTypes } from '../data/equipment'
 
-// New types for better type safety
-type CategoryMap = {
-  [key: string]: {
-    name: string;
-    scenarios: Scenario[];
-    order: number;
-  };
-};
+// Improved type definitions for better type safety
+interface Category {
+  id: string;
+  name: string;
+  scenarios: Scenario[];
+  order: number;
+}
+
+interface Categories {
+  [key: string]: Category;
+}
 
 const DEFAULT_CATEGORY = 'Uncategorized';
 
-// Helper function to normalize category names
-const normalizeCategory = (category: string): string => {
-  return (category || '').trim().toLowerCase();
+// Enhanced category normalization
+const normalizeCategory = (category: string | undefined | null): string => {
+  if (!category) return DEFAULT_CATEGORY.toLowerCase();
+  return category.trim().toLowerCase();
 };
 
 const Sidebar = ({
@@ -52,77 +56,78 @@ const Sidebar = ({
 }: SidebarProps) => {
   const [scenariosExpanded, setScenariosExpanded] = useState(true);
   const [equipmentExpanded, setEquipmentExpanded] = useState(true);
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
-  const availableEquipment = currentScenario
-    ? equipmentTypes.filter(equipment => 
-        currentScenario.availableEquipment.includes(equipment.id)
-      )
-    : [];
+  // Get available equipment for current scenario
+  const availableEquipment = useMemo(() => 
+    currentScenario
+      ? equipmentTypes.filter(equipment => 
+          currentScenario.availableEquipment.includes(equipment.id)
+        )
+      : []
+  , [currentScenario]);
 
-  // Enhanced category organization with proper ordering and type safety
-  const categorizedScenarios = useMemo(() => {
-    const categoryMap: CategoryMap = {};
+  // Enhanced categorization logic with proper type safety and error handling
+  const { categories, orderedCategoryIds } = useMemo(() => {
+    const cats: Categories = {};
     let orderCounter = 0;
 
-    // First pass: collect all categories and initialize them
+    // First pass: Initialize categories
     scenarios.forEach(scenario => {
-      const rawCategory = scenario.category?.trim() || DEFAULT_CATEGORY;
-      const normalizedCategory = normalizeCategory(rawCategory);
-      
-      if (!categoryMap[normalizedCategory]) {
-        categoryMap[normalizedCategory] = {
-          name: rawCategory, // Keep original case for display
+      const normalizedCat = normalizeCategory(scenario.category);
+      if (!cats[normalizedCat]) {
+        cats[normalizedCat] = {
+          id: normalizedCat,
+          name: scenario.category || DEFAULT_CATEGORY,
           scenarios: [],
-          order: orderCounter++
+          order: normalizedCat === DEFAULT_CATEGORY.toLowerCase() 
+            ? Number.MAX_SAFE_INTEGER // Ensure Uncategorized is always last
+            : orderCounter++
         };
       }
     });
 
-    // Second pass: populate scenarios into their categories
+    // Second pass: Populate scenarios
     scenarios.forEach(scenario => {
-      const normalizedCategory = normalizeCategory(scenario.category || DEFAULT_CATEGORY);
-      categoryMap[normalizedCategory].scenarios.push(scenario);
+      const normalizedCat = normalizeCategory(scenario.category);
+      cats[normalizedCat].scenarios.push(scenario);
     });
 
-    // Sort categories by order and filter out empty ones
-    return Object.entries(categoryMap)
-      .filter(([_, data]) => data.scenarios.length > 0)
+    // Sort categories
+    const orderedIds = Object.keys(cats)
       .sort((a, b) => {
-        // Special handling for Uncategorized (always last)
-        if (normalizeCategory(a[0]) === normalizeCategory(DEFAULT_CATEGORY)) return 1;
-        if (normalizeCategory(b[0]) === normalizeCategory(DEFAULT_CATEGORY)) return -1;
-        return a[1].order - b[1].order;
-      })
-      .reduce((acc, [key, value]) => {
-        acc[key] = value.scenarios;
-        return acc;
-      }, {} as { [key: string]: Scenario[] });
+        // Special handling for Uncategorized
+        if (a === normalizeCategory(DEFAULT_CATEGORY)) return 1;
+        if (b === normalizeCategory(DEFAULT_CATEGORY)) return -1;
+        return cats[a].order - cats[b].order;
+      });
+
+    return {
+      categories: cats,
+      orderedCategoryIds: orderedIds
+    };
   }, [scenarios]);
 
-  // Initialize expanded categories with proper type checking
+  // Initialize expanded states
   useEffect(() => {
-    const initialExpandedState = Object.keys(categorizedScenarios).reduce(
-      (acc, category) => ({
+    const initialState = orderedCategoryIds.reduce<Record<string, boolean>>(
+      (acc, categoryId) => ({
         ...acc,
-        [normalizeCategory(category)]: true
+        [categoryId]: true
       }),
       {}
     );
-    setExpandedCategories(initialExpandedState);
-  }, [categorizedScenarios]);
+    setExpandedCategories(initialState);
+  }, [orderedCategoryIds]);
 
   const handleEquipmentSelect = (equipment: Equipment) => {
-    setSelectedEquipment(null);
+    if (isHandToolActive && onDisableHandTool) {
+      onDisableHandTool();
+    }
     if (onResetZoom) {
       onResetZoom();
     }
-    if (onDisableHandTool && isHandToolActive) {
-      onDisableHandTool();
-    }
-    setTimeout(() => {
-      setSelectedEquipment(equipment);
-    }, 300);
+    setSelectedEquipment(equipment);
   };
 
   const handleScenarioSelect = (scenario: Scenario) => {
@@ -133,6 +138,7 @@ const Sidebar = ({
       onResetZoom();
     }
     
+    // Select first available equipment after a short delay
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
         scenario.availableEquipment.includes(eq.id)
@@ -143,23 +149,12 @@ const Sidebar = ({
     }, 300);
   };
 
-  const toggleCategory = (category: string) => {
-    const normalizedCategory = normalizeCategory(category);
+  const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => ({
       ...prev,
-      [normalizedCategory]: !prev[normalizedCategory]
+      [categoryId]: !prev[categoryId]
     }));
   };
-
-  // Get ordered categories maintaining proper type safety
-  const orderedCategories = useMemo(() => 
-    Object.keys(categorizedScenarios).map(key => ({
-      normalized: key,
-      original: categorizedScenarios[key][0]?.category || key
-    }))
-  , [categorizedScenarios]);
-
-  const hasContent = orderedCategories.length > 0;
 
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
@@ -180,46 +175,51 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && hasContent && (
+            {scenariosExpanded && orderedCategoryIds.length > 0 && (
               <div className="divide-y divide-gray-100">
-                {orderedCategories.map(({ normalized, original }) => (
-                  <div key={normalized} className="bg-white">
-                    {/* Category Header */}
-                    <button
-                      onClick={() => toggleCategory(normalized)}
-                      className={`w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 ${
-                        normalizeCategory(original) === normalizeCategory(DEFAULT_CATEGORY)
-                          ? 'border-gray-300/20' 
-                          : 'border-blue-500/20'
-                      }`}
-                    >
-                      <span className="text-sm font-medium text-gray-600 ml-1">{original}</span>
-                      {expandedCategories[normalized] ? 
-                        <ChevronUp size={14} className="text-gray-400" /> : 
-                        <ChevronDown size={14} className="text-gray-400" />
-                      }
-                    </button>
-                    
-                    {/* Category Content */}
-                    {expandedCategories[normalized] && categorizedScenarios[normalized] && (
-                      <div className="py-1 px-2">
-                        {categorizedScenarios[normalized].map((scenario) => (
-                          <button
-                            key={scenario.id}
-                            className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
-                              currentScenario?.id === scenario.id
-                                ? 'bg-blue-50 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                            onClick={() => handleScenarioSelect(scenario)}
-                          >
-                            {scenario.title}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {orderedCategoryIds.map(categoryId => {
+                  const category = categories[categoryId];
+                  return (
+                    <div key={categoryId} className="bg-white">
+                      {/* Category Header */}
+                      <button
+                        onClick={() => toggleCategory(categoryId)}
+                        className={`w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 ${
+                          categoryId === normalizeCategory(DEFAULT_CATEGORY)
+                            ? 'border-gray-300/20' 
+                            : 'border-blue-500/20'
+                        }`}
+                      >
+                        <span className="text-sm font-medium text-gray-600 ml-1">
+                          {category.name}
+                        </span>
+                        {expandedCategories[categoryId] ? 
+                          <ChevronUp size={14} className="text-gray-400" /> : 
+                          <ChevronDown size={14} className="text-gray-400" />
+                        }
+                      </button>
+                      
+                      {/* Category Content */}
+                      {expandedCategories[categoryId] && (
+                        <div className="py-1 px-2">
+                          {category.scenarios.map((scenario) => (
+                            <button
+                              key={scenario.id}
+                              className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                                currentScenario?.id === scenario.id
+                                  ? 'bg-blue-50 text-blue-700 font-medium'
+                                  : 'text-gray-600 hover:bg-gray-50'
+                              }`}
+                              onClick={() => handleScenarioSelect(scenario)}
+                            >
+                              {scenario.title}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
