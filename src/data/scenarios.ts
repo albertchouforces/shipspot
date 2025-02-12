@@ -16,7 +16,7 @@ export const predefinedScenarios: Scenario[] = [
     category: "Harry DeWolf-class",
     questionImage: "https://images.unsplash.com/photo-1566552881560-0be862a7c445?auto=format&fit=crop&q=80&w=2000",
     answerImage: "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=2000",
-    markers: [], // Fixed: Changed from ["first-aid"] to empty array as markers should be Marker objects
+    markers: [],
     availableEquipment: ["first-aid"]
   },
   {
@@ -36,5 +36,14 @@ export const predefinedScenarios: Scenario[] = [
     answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
     markers: [],
     availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "hose-station"]
+  },
+  {
+    id: "scenario5",
+    title: "Forward Deck Equipment",
+    category: "Halifax-class",
+    questionImage: null,
+    answerImage: null,
+    markers: [],
+    availableEquipment: ["life-buoy", "radio", "anchor"]
   }
 ]

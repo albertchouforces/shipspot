@@ -44,26 +44,28 @@ const Sidebar = ({
       )
     : []
 
-  // Group scenarios by category
+  // Group scenarios by category with proper type checking
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
-      if (!grouped[scenario.category]) {
-        grouped[scenario.category] = []
+      const category = scenario.category || 'Uncategorized'
+      if (!grouped[category]) {
+        grouped[category] = []
       }
-      grouped[scenario.category].push(scenario)
+      grouped[category].push(scenario)
     })
     return grouped
   }, [scenarios])
 
-  // Expand the first category by default when the component mounts or when scenarios change
+  // Initialize expanded categories - only expand the first category
   useEffect(() => {
     if (scenarios.length > 0) {
-      const firstCategory = scenarios[0].category
-      setExpandedCategories(prev => ({
-        ...prev,
-        [firstCategory]: true
-      }))
+      const categories = [...new Set(scenarios.map(s => s.category))]
+      const initialExpandedState = categories.reduce((acc, category, index) => {
+        acc[category] = index === 0 // Only set the first category to true
+        return acc
+      }, {} as { [key: string]: boolean })
+      setExpandedCategories(initialExpandedState)
     }
   }, [scenarios])
 

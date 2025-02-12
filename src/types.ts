@@ -15,7 +15,7 @@ export type Marker = {
 export type Scenario = {
   id: string
   title: string
-  category: string // New field for scenario categorization
+  category: string // Making sure category is required and documented
   questionImage: string | null
   answerImage: string | null
   markers: Marker[]
