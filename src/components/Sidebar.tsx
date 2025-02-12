@@ -48,7 +48,6 @@ const Sidebar = ({
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
-      // Ensure category is never undefined or empty
       const category = scenario.category || 'Uncategorized'
       if (!grouped[category]) {
         grouped[category] = []
@@ -58,22 +57,31 @@ const Sidebar = ({
     return grouped
   }, [scenarios])
 
-  // Initialize and update expanded categories whenever categorizedScenarios changes
+  // Initialize and update expanded categories whenever scenarios change
   useEffect(() => {
     const categories = Object.keys(categorizedScenarios)
-    if (categories.length > 0) {
-      setExpandedCategories(prev => {
-        const newState = { ...prev }
-        categories.forEach(category => {
-          // If category doesn't exist in state, set it to true (expanded)
-          if (!(category in newState)) {
-            newState[category] = true
-          }
-        })
-        return newState
+    
+    // Keep existing expanded states while adding new categories
+    setExpandedCategories(prev => {
+      const newState: { [key: string]: boolean } = {}
+      
+      // First, copy over existing states
+      categories.forEach(category => {
+        // If category existed before, keep its state, otherwise default to true
+        newState[category] = category in prev ? prev[category] : true
       })
-    }
-  }, [categorizedScenarios]) // Depend on categorizedScenarios to ensure updates
+      
+      // If this is initial load (no previous states) and we have categories,
+      // set all to false except the first one
+      if (Object.keys(prev).length === 0 && categories.length > 0) {
+        categories.forEach((category, index) => {
+          newState[category] = index === 0
+        })
+      }
+      
+      return newState
+    })
+  }, [categorizedScenarios]) // Run whenever categories change
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(null)
@@ -96,6 +104,14 @@ const Sidebar = ({
       onResetZoom()
     }
     
+    // Set the category of the selected scenario to expanded
+    if (scenario.category) {
+      setExpandedCategories(prev => ({
+        ...prev,
+        [scenario.category]: true
+      }))
+    }
+    
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
         scenario.availableEquipment.includes(eq.id)
@@ -113,9 +129,10 @@ const Sidebar = ({
     }))
   }
 
-  // Ensure we have categories to display
-  const categories = Object.keys(categorizedScenarios)
-  const hasCategories = categories.length > 0
+  // Render nothing if there are no scenarios
+  if (scenarios.length === 0) {
+    return null
+  }
 
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
@@ -136,44 +153,40 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && hasCategories && (
-              <div className="divide-y divide-gray-100">
-                {categories.map((category) => (
-                  <div key={category} className="bg-white">
-                    {/* Category Header */}
-                    <button
-                      onClick={() => toggleCategory(category)}
-                      className="w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 border-blue-500/20"
-                    >
-                      <span className="text-sm font-medium text-gray-600 ml-1">{category}</span>
-                      {expandedCategories[category] ? 
-                        <ChevronUp size={14} className="text-gray-400" /> : 
-                        <ChevronDown size={14} className="text-gray-400" />
-                      }
-                    </button>
-                    
-                    {/* Category Content */}
-                    {expandedCategories[category] && categorizedScenarios[category] && (
-                      <div className="py-1 px-2">
-                        {categorizedScenarios[category].map((scenario) => (
-                          <button
-                            key={scenario.id}
-                            className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
-                              currentScenario?.id === scenario.id
-                                ? 'bg-blue-50 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                            onClick={() => handleScenarioSelect(scenario)}
-                          >
-                            {scenario.title}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
+              <div key={category} className="bg-white border-t first:border-t-0">
+                {/* Category Header */}
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className="w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 border-blue-500/20"
+                >
+                  <span className="text-sm font-medium text-gray-600 ml-1">{category}</span>
+                  {expandedCategories[category] ? 
+                    <ChevronUp size={14} className="text-gray-400" /> : 
+                    <ChevronDown size={14} className="text-gray-400" />
+                  }
+                </button>
+                
+                {/* Category Content */}
+                {expandedCategories[category] && (
+                  <div className="py-1 px-2">
+                    {categoryScenarios.map((scenario) => (
+                      <button
+                        key={scenario.id}
+                        className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                          currentScenario?.id === scenario.id
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleScenarioSelect(scenario)}
+                      >
+                        {scenario.title}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            ))}
           </div>
 
           {currentScenario && availableEquipment.length > 0 && (

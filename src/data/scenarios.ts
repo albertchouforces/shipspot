@@ -46,4 +46,7 @@ export const predefinedScenarios: Scenario[] = [
     markers: [],
     availableEquipment: ["life-buoy", "radio", "anchor"]
   }
-]
+].map(scenario => ({
+  ...scenario,
+  category: scenario.category || "Uncategorized" // Ensure category is never undefined
+}))
