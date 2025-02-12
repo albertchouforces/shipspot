@@ -41,8 +41,8 @@ export const predefinedScenarios: Scenario[] = [
     id: "scenario5",
     title: "Forward Deck Equipment",
     category: "Halifax-class",
-    questionImage: null,
-    answerImage: null,
+    questionImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/q1.png",
+    answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
     markers: [],
     availableEquipment: ["life-buoy", "radio", "anchor"]
   }
