@@ -2,6 +2,8 @@ import { Equipment, Scenario } from '../types'
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
+import { getSortedScenarios } from '../data/scenarios'
+import { equipmentTypes } from '../data/equipment'
 
 interface SidebarProps {
   scenarios: Scenario[]
@@ -18,8 +20,6 @@ interface SidebarProps {
   onMarkerSizeChange: (size: number) => void
   onResetMarkerSize: () => void
 }
-
-import { equipmentTypes } from '../data/equipment'
 
 const STORAGE_KEYS = {
   SCENARIOS_EXPANDED: 'shipspot_scenarios_expanded',
@@ -51,54 +51,84 @@ const Sidebar = ({
     return saved ? JSON.parse(saved) : true
   })
 
-  // Group scenarios by category
+  // Group and sort scenarios by category
   const categorizedScenarios = useMemo(() => {
+    const sortedScenarios = getSortedScenarios(scenarios)
     const grouped: { [key: string]: Scenario[] } = {}
-    scenarios.forEach(scenario => {
+    
+    sortedScenarios.forEach(scenario => {
       const category = scenario.category || 'Uncategorized'
       if (!grouped[category]) {
         grouped[category] = []
       }
       grouped[category].push(scenario)
     })
-    return grouped
+
+    // Sort categories alphabetically
+    return Object.keys(grouped)
+      .sort()
+      .reduce((acc, category) => {
+        // Sort scenarios within each category alphabetically
+        acc[category] = grouped[category].sort((a, b) => a.title.localeCompare(b.title))
+        return acc
+      }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories state with all categories
+  // Initialize expanded categories state
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
-    const savedCategories = saved ? JSON.parse(saved) : {}
-    
-    // Get all unique categories from scenarios
-    const allCategories = Array.from(new Set(scenarios.map(s => s.category || 'Uncategorized')))
-    
-    // Create initial state with all categories
+    const categories = Object.keys(categorizedScenarios)
     const initialState: { [key: string]: boolean } = {}
-    allCategories.forEach(category => {
-      // If we have a saved state for this category, use it, otherwise default to true
-      initialState[category] = savedCategories[category] ?? true
+    categories.forEach((category) => {
+      initialState[category] = true // Always expand all categories initially
     })
-    
     return initialState
   })
 
+  // Auto-select first scenario on initial load
+  useEffect(() => {
+    if (scenarios.length > 0) {
+      const sortedCategories = Object.keys(categorizedScenarios).sort()
+      if (sortedCategories.length > 0) {
+        const firstCategory = sortedCategories[0]
+        const firstScenario = categorizedScenarios[firstCategory]?.[0]
+        
+        if (firstScenario && (!currentScenario || currentScenario.id !== firstScenario.id)) {
+          handleScenarioSelect(firstScenario)
+          
+          // Ensure the first category is expanded
+          setExpandedCategories(prev => ({
+            ...prev,
+            [firstCategory]: true
+          }))
+        }
+      }
+    }
+  }, [scenarios, categorizedScenarios])
+
   // Update expanded categories when scenarios change
   useEffect(() => {
-    const allCategories = Array.from(new Set(scenarios.map(s => s.category || 'Uncategorized')))
+    const categories = Object.keys(categorizedScenarios)
     
     setExpandedCategories(prev => {
       const newState = { ...prev }
       
-      // Add any new categories
-      allCategories.forEach(category => {
+      // Ensure all categories exist in the state
+      categories.forEach(category => {
         if (!(category in newState)) {
-          newState[category] = true
+          newState[category] = true // Always expand categories by default
+        }
+      })
+      
+      // Remove any categories that no longer exist
+      Object.keys(newState).forEach(category => {
+        if (!categories.includes(category)) {
+          delete newState[category]
         }
       })
       
       return newState
     })
-  }, [scenarios])
+  }, [categorizedScenarios])
 
   // Persist states to localStorage
   useEffect(() => {
@@ -226,7 +256,7 @@ const Sidebar = ({
                     }`}
                     onClick={() => handleScenarioSelect(scenario)}
                   >
-                    {scenario.title || 'Untitled Scenario'}
+                    {scenario.title}
                   </button>
                 ))}
               </div>
