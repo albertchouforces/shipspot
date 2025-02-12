@@ -44,30 +44,54 @@ const Sidebar = ({
       )
     : []
 
-  // Group scenarios by category with proper type checking
+  // Group scenarios by category with improved handling
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
+    
+    // First pass: collect all valid categories
+    const validCategories = new Set<string>()
     scenarios.forEach(scenario => {
-      const category = scenario.category || 'Uncategorized'
-      if (!grouped[category]) {
-        grouped[category] = []
+      if (scenario.category && typeof scenario.category === 'string' && scenario.category.trim()) {
+        validCategories.add(scenario.category.trim())
       }
-      grouped[category].push(scenario)
     })
-    return grouped
+
+    // Initialize categories
+    validCategories.forEach(category => {
+      grouped[category] = []
+    })
+
+    // Second pass: group scenarios
+    scenarios.forEach(scenario => {
+      if (scenario.category && typeof scenario.category === 'string' && scenario.category.trim()) {
+        const category = scenario.category.trim()
+        grouped[category].push({
+          ...scenario,
+          category // Ensure category is properly set
+        })
+      }
+    })
+
+    // Sort categories alphabetically
+    return Object.keys(grouped)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = grouped[key]
+        return acc
+      }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories - only expand the first category
+  // Initialize expanded categories when scenarios change
   useEffect(() => {
-    if (scenarios.length > 0) {
-      const categories = [...new Set(scenarios.map(s => s.category))]
-      const initialExpandedState = categories.reduce((acc, category, index) => {
-        acc[category] = index === 0 // Only set the first category to true
+    const categories = Object.keys(categorizedScenarios)
+    if (categories.length > 0) {
+      const initialExpandedState = categories.reduce((acc, category) => {
+        acc[category] = true // Expand all categories by default
         return acc
       }, {} as { [key: string]: boolean })
       setExpandedCategories(initialExpandedState)
     }
-  }, [scenarios])
+  }, [categorizedScenarios])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(null)
@@ -107,6 +131,9 @@ const Sidebar = ({
     }))
   }
 
+  // Only render if we have categories and scenarios
+  const hasContent = Object.keys(categorizedScenarios).length > 0
+
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
       <div className="p-4 border-b bg-white">
@@ -126,7 +153,7 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && (
+            {scenariosExpanded && hasContent && (
               <div className="divide-y divide-gray-100">
                 {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
                   <div key={category} className="bg-white">
