@@ -1,7 +1,7 @@
 import { Equipment, Scenario } from '../types'
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import * as Icons from 'lucide-react'
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 
 interface SidebarProps {
   scenarios: Scenario[]
@@ -36,12 +36,36 @@ const Sidebar = ({
 }: SidebarProps) => {
   const [scenariosExpanded, setScenariosExpanded] = useState(true)
   const [equipmentExpanded, setEquipmentExpanded] = useState(true)
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
 
   const availableEquipment = currentScenario
     ? equipmentTypes.filter(equipment => 
         currentScenario.availableEquipment.includes(equipment.id)
       )
     : []
+
+  // Group scenarios by category
+  const categorizedScenarios = useMemo(() => {
+    const grouped: { [key: string]: Scenario[] } = {}
+    scenarios.forEach(scenario => {
+      if (!grouped[scenario.category]) {
+        grouped[scenario.category] = []
+      }
+      grouped[scenario.category].push(scenario)
+    })
+    return grouped
+  }, [scenarios])
+
+  // Expand the first category by default when the component mounts or when scenarios change
+  useEffect(() => {
+    if (scenarios.length > 0) {
+      const firstCategory = scenarios[0].category
+      setExpandedCategories(prev => ({
+        ...prev,
+        [firstCategory]: true
+      }))
+    }
+  }, [scenarios])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(null)
@@ -74,37 +98,67 @@ const Sidebar = ({
     }, 300)
   }
 
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
+  }
+
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Ship Equipment Marker</h2>
+      <div className="p-4 border-b bg-white">
+        <h2 className="text-lg font-semibold text-gray-900">Ship Equipment Marker</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
-          <div className="border-2 rounded-lg overflow-hidden shadow-md">
+          {/* Main Sections Container */}
+          <div className="border rounded-lg overflow-hidden shadow-sm">
+            {/* Ships Section Header */}
             <button
               onClick={() => setScenariosExpanded(!scenariosExpanded)}
-              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100"
+              className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
             >
-              <span className="font-medium text-sm text-gray-700">Scenarios</span>
+              <span className="font-semibold text-sm text-gray-800">Ships</span>
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
             {scenariosExpanded && (
-              <div className="p-2 space-y-1">
-                {scenarios.map((scenario) => (
-                  <button
-                    key={scenario.id}
-                    className={`w-full text-left p-2 rounded-lg transition-all duration-200 text-sm break-words whitespace-normal ${
-                      currentScenario?.id === scenario.id
-                        ? 'bg-blue-100 text-blue-800 shadow-sm font-medium'
-                        : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => handleScenarioSelect(scenario)}
-                  >
-                    {scenario.title}
-                  </button>
+              <div className="divide-y divide-gray-100">
+                {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
+                  <div key={category} className="bg-white">
+                    {/* Category Header */}
+                    <button
+                      onClick={() => toggleCategory(category)}
+                      className="w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 border-blue-500/20"
+                    >
+                      <span className="text-sm font-medium text-gray-600 ml-1">{category}</span>
+                      {expandedCategories[category] ? 
+                        <ChevronUp size={14} className="text-gray-400" /> : 
+                        <ChevronDown size={14} className="text-gray-400" />
+                      }
+                    </button>
+                    
+                    {/* Category Content */}
+                    {expandedCategories[category] && (
+                      <div className="py-1 px-2">
+                        {categoryScenarios.map((scenario) => (
+                          <button
+                            key={scenario.id}
+                            className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                              currentScenario?.id === scenario.id
+                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                            onClick={() => handleScenarioSelect(scenario)}
+                          >
+                            {scenario.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -112,12 +166,13 @@ const Sidebar = ({
 
           {currentScenario && availableEquipment.length > 0 && (
             <>
-              <div className="border-2 rounded-lg overflow-hidden shadow-md">
+              {/* Equipment Types Section */}
+              <div className="border rounded-lg overflow-hidden shadow-sm">
                 <button
                   onClick={() => setEquipmentExpanded(!equipmentExpanded)}
-                  className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100"
+                  className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
-                  <span className="font-medium text-sm text-gray-700">Equipment Types</span>
+                  <span className="font-semibold text-sm text-gray-800">Equipment Types</span>
                   {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
                 
@@ -128,9 +183,9 @@ const Sidebar = ({
                       return (
                         <button
                           key={equipment.id}
-                          className={`w-full px-3 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 text-sm ${
+                          className={`w-full px-3 py-2 rounded-md flex items-center gap-2 transition-all duration-200 text-sm ${
                             selectedEquipment?.id === equipment.id && !isHandToolActive
-                              ? 'bg-blue-100 text-blue-800 shadow-sm font-medium'
+                              ? 'bg-blue-50 text-blue-700 font-medium'
                               : 'text-gray-600 hover:bg-gray-50'
                           }`}
                           onClick={() => handleEquipmentSelect(equipment)}
@@ -144,9 +199,10 @@ const Sidebar = ({
                 )}
               </div>
 
-              <div className="border-2 rounded-lg overflow-hidden shadow-md p-3 space-y-3">
+              {/* Marker Size Section */}
+              <div className="border rounded-lg overflow-hidden shadow-sm p-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Marker Size</span>
+                  <span className="text-sm font-semibold text-gray-800">Marker Size</span>
                   <button
                     onClick={onResetMarkerSize}
                     className="p-1 text-gray-500 hover:text-blue-600 rounded-lg"
@@ -168,7 +224,8 @@ const Sidebar = ({
                 </div>
               </div>
 
-              <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-3">
+              {/* Help Text */}
+              <div className="bg-amber-50 border rounded-lg p-3">
                 <p className="text-xs text-amber-700">
                   Click on the image to place markers for the selected equipment type. Markers can only be placed when the image is not zoomed or panned.
                 </p>
@@ -178,6 +235,7 @@ const Sidebar = ({
         </div>
       </div>
 
+      {/* Footer */}
       <div className="p-4 border-t bg-white">
         <div className="text-[11px] text-gray-500 space-y-1 text-center">
           <p className="leading-relaxed">
