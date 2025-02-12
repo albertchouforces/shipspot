@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { useState, useMemo, useEffect } from 'react'
 import { equipmentTypes } from '../data/equipment'
-import { getAllCategories, getCategoryById } from '../data/categories'
+import { getAllCategories } from '../data/categories'
 
 interface SidebarProps {
   scenarios: Scenario[]
