@@ -44,53 +44,41 @@ const Sidebar = ({
       )
     : []
 
-  // Group scenarios by category with improved handling
+  // Improved category handling that maintains source order
   const categorizedScenarios = useMemo(() => {
-    const grouped: { [key: string]: Scenario[] } = {}
-    
-    // First pass: collect all valid categories
-    const validCategories = new Set<string>()
+    // Create a map to maintain category order
+    const categoryMap = new Map<string, Scenario[]>()
+    const categoryOrder: string[] = []
+
+    // First pass: collect categories in order of appearance
     scenarios.forEach(scenario => {
-      if (scenario.category && typeof scenario.category === 'string' && scenario.category.trim()) {
-        validCategories.add(scenario.category.trim())
+      const category = scenario.category?.trim() || 'Uncategorized'
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, [])
+        categoryOrder.push(category)
+      }
+      categoryMap.get(category)?.push(scenario)
+    })
+
+    // Convert to object while maintaining order
+    const result: { [key: string]: Scenario[] } = {}
+    categoryOrder.forEach(category => {
+      const scenarios = categoryMap.get(category)
+      if (scenarios && scenarios.length > 0) {
+        result[category] = scenarios
       }
     })
 
-    // Initialize categories
-    validCategories.forEach(category => {
-      grouped[category] = []
-    })
-
-    // Second pass: group scenarios
-    scenarios.forEach(scenario => {
-      if (scenario.category && typeof scenario.category === 'string' && scenario.category.trim()) {
-        const category = scenario.category.trim()
-        grouped[category].push({
-          ...scenario,
-          category // Ensure category is properly set
-        })
-      }
-    })
-
-    // Sort categories alphabetically
-    return Object.keys(grouped)
-      .sort()
-      .reduce((acc, key) => {
-        acc[key] = grouped[key]
-        return acc
-      }, {} as { [key: string]: Scenario[] })
+    return result
   }, [scenarios])
 
-  // Initialize expanded categories when scenarios change
+  // Initialize expanded categories
   useEffect(() => {
-    const categories = Object.keys(categorizedScenarios)
-    if (categories.length > 0) {
-      const initialExpandedState = categories.reduce((acc, category) => {
-        acc[category] = true // Expand all categories by default
-        return acc
-      }, {} as { [key: string]: boolean })
-      setExpandedCategories(initialExpandedState)
-    }
+    const initialExpandedState: { [key: string]: boolean } = {}
+    Object.keys(categorizedScenarios).forEach(category => {
+      initialExpandedState[category] = true
+    })
+    setExpandedCategories(initialExpandedState)
   }, [categorizedScenarios])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
@@ -131,8 +119,12 @@ const Sidebar = ({
     }))
   }
 
-  // Only render if we have categories and scenarios
-  const hasContent = Object.keys(categorizedScenarios).length > 0
+  // Safely get categories maintaining order
+  const orderedCategories = useMemo(() => 
+    Object.keys(categorizedScenarios)
+  , [categorizedScenarios])
+
+  const hasContent = orderedCategories.length > 0
 
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
@@ -155,7 +147,7 @@ const Sidebar = ({
             
             {scenariosExpanded && hasContent && (
               <div className="divide-y divide-gray-100">
-                {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
+                {orderedCategories.map((category) => (
                   <div key={category} className="bg-white">
                     {/* Category Header */}
                     <button
@@ -170,9 +162,9 @@ const Sidebar = ({
                     </button>
                     
                     {/* Category Content */}
-                    {expandedCategories[category] && (
+                    {expandedCategories[category] && categorizedScenarios[category] && (
                       <div className="py-1 px-2">
-                        {categoryScenarios.map((scenario) => (
+                        {categorizedScenarios[category].map((scenario) => (
                           <button
                             key={scenario.id}
                             className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
