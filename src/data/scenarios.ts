@@ -38,7 +38,7 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&q=80&w=2000",
     answerImage: "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&q=80&w=2000",
     markers: [],
-    availableEquipment: []
+    availableEquipment: ["life-buoy", "radio", "anchor"]
   },
   {
     id: "scenario4",
@@ -53,8 +53,8 @@ export const predefinedScenarios: Scenario[] = [
     id: "scenario5",
     title: "Forward Deck Equipment",
     category: "Halifax-class",
-    questionImage: null,
-    answerImage: null,
+    questionImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/q1.png",
+    answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
     markers: [],
     availableEquipment: ["life-buoy", "radio", "anchor"]
   }
