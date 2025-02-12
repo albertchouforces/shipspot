@@ -21,6 +21,17 @@ interface SidebarProps {
 
 import { equipmentTypes } from '../data/equipment'
 
+// New types for better type safety
+type CategoryMap = {
+  [key: string]: {
+    name: string;
+    scenarios: Scenario[];
+    order: number;
+  };
+};
+
+const DEFAULT_CATEGORY = 'Uncategorized';
+
 const Sidebar = ({
   scenarios,
   currentScenario,
@@ -34,107 +45,111 @@ const Sidebar = ({
   onMarkerSizeChange,
   onResetMarkerSize,
 }: SidebarProps) => {
-  const [scenariosExpanded, setScenariosExpanded] = useState(true)
-  const [equipmentExpanded, setEquipmentExpanded] = useState(true)
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
+  const [scenariosExpanded, setScenariosExpanded] = useState(true);
+  const [equipmentExpanded, setEquipmentExpanded] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
   const availableEquipment = currentScenario
     ? equipmentTypes.filter(equipment => 
         currentScenario.availableEquipment.includes(equipment.id)
       )
-    : []
+    : [];
 
-  // Improved category handling that maintains source order
+  // Enhanced category organization with proper ordering and type safety
   const categorizedScenarios = useMemo(() => {
-    const categoryMap = new Map<string, Scenario[]>()
-    const categoryOrder: string[] = []
+    const categoryMap: CategoryMap = {};
+    let orderCounter = 0;
 
-    // First pass: collect all unique categories
+    // First pass: collect all categories and initialize them
     scenarios.forEach(scenario => {
-      if (scenario.category && !categoryOrder.includes(scenario.category)) {
-        categoryOrder.push(scenario.category)
-        categoryMap.set(scenario.category, [])
+      const category = scenario.category?.trim() || DEFAULT_CATEGORY;
+      
+      if (!categoryMap[category]) {
+        categoryMap[category] = {
+          name: category,
+          scenarios: [],
+          order: orderCounter++
+        };
       }
-    })
-
-    // Add "Uncategorized" at the end if needed
-    if (!categoryOrder.includes('Uncategorized')) {
-      categoryOrder.push('Uncategorized')
-      categoryMap.set('Uncategorized', [])
-    }
+    });
 
     // Second pass: populate scenarios into their categories
     scenarios.forEach(scenario => {
-      const category = scenario.category || 'Uncategorized'
-      const existingScenarios = categoryMap.get(category) || []
-      categoryMap.set(category, [...existingScenarios, scenario])
-    })
+      const category = scenario.category?.trim() || DEFAULT_CATEGORY;
+      categoryMap[category].scenarios.push(scenario);
+    });
 
-    // Convert to object while maintaining order
-    const result: { [key: string]: Scenario[] } = {}
-    categoryOrder.forEach(category => {
-      const scenariosInCategory = categoryMap.get(category)
-      if (scenariosInCategory && scenariosInCategory.length > 0) {
-        result[category] = scenariosInCategory
-      }
-    })
+    // Sort categories by order and filter out empty ones
+    return Object.entries(categoryMap)
+      .filter(([_, data]) => data.scenarios.length > 0)
+      .sort((a, b) => {
+        // Special handling for Uncategorized (always last)
+        if (a[0] === DEFAULT_CATEGORY) return 1;
+        if (b[0] === DEFAULT_CATEGORY) return -1;
+        return a[1].order - b[1].order;
+      })
+      .reduce((acc, [key, value]) => {
+        acc[key] = value.scenarios;
+        return acc;
+      }, {} as { [key: string]: Scenario[] });
+  }, [scenarios]);
 
-    return result
-  }, [scenarios])
-
-  // Initialize expanded categories
+  // Initialize expanded categories with proper type checking
   useEffect(() => {
-    const initialExpandedState: { [key: string]: boolean } = {}
-    Object.keys(categorizedScenarios).forEach(category => {
-      initialExpandedState[category] = true
-    })
-    setExpandedCategories(initialExpandedState)
-  }, [categorizedScenarios])
+    const initialExpandedState = Object.keys(categorizedScenarios).reduce(
+      (acc, category) => ({
+        ...acc,
+        [category]: true
+      }),
+      {}
+    );
+    setExpandedCategories(initialExpandedState);
+  }, [categorizedScenarios]);
 
   const handleEquipmentSelect = (equipment: Equipment) => {
-    setSelectedEquipment(null)
+    setSelectedEquipment(null);
     if (onResetZoom) {
-      onResetZoom()
+      onResetZoom();
     }
     if (onDisableHandTool && isHandToolActive) {
-      onDisableHandTool()
+      onDisableHandTool();
     }
     setTimeout(() => {
-      setSelectedEquipment(equipment)
-    }, 300)
-  }
+      setSelectedEquipment(equipment);
+    }, 300);
+  };
 
   const handleScenarioSelect = (scenario: Scenario) => {
-    onScenarioSelect(scenario)
-    setSelectedEquipment(null)
+    onScenarioSelect(scenario);
+    setSelectedEquipment(null);
     
     if (onResetZoom) {
-      onResetZoom()
+      onResetZoom();
     }
     
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
         scenario.availableEquipment.includes(eq.id)
-      )
+      );
       if (firstEquipment) {
-        setSelectedEquipment(firstEquipment)
+        setSelectedEquipment(firstEquipment);
       }
-    }, 300)
-  }
+    }, 300);
+  };
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
-    }))
-  }
+    }));
+  };
 
-  // Safely get categories maintaining order
+  // Get ordered categories maintaining proper type safety
   const orderedCategories = useMemo(() => 
     Object.keys(categorizedScenarios)
-  , [categorizedScenarios])
+  , [categorizedScenarios]);
 
-  const hasContent = orderedCategories.length > 0
+  const hasContent = orderedCategories.length > 0;
 
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
@@ -162,7 +177,11 @@ const Sidebar = ({
                     {/* Category Header */}
                     <button
                       onClick={() => toggleCategory(category)}
-                      className="w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 border-blue-500/20"
+                      className={`w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 ${
+                        category === DEFAULT_CATEGORY 
+                          ? 'border-gray-300/20' 
+                          : 'border-blue-500/20'
+                      }`}
                     >
                       <span className="text-sm font-medium text-gray-600 ml-1">{category}</span>
                       {expandedCategories[category] ? 
@@ -210,7 +229,7 @@ const Sidebar = ({
                 {equipmentExpanded && (
                   <div className="p-2 space-y-1">
                     {availableEquipment.map((equipment) => {
-                      const IconComponent = (Icons as any)[equipment.icon] || Icons.HelpCircle
+                      const IconComponent = (Icons as any)[equipment.icon] || Icons.HelpCircle;
                       return (
                         <button
                           key={equipment.id}
@@ -224,7 +243,7 @@ const Sidebar = ({
                           <IconComponent size={16} style={{ color: equipment.color }} />
                           <span className="truncate">{equipment.name}</span>
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -281,7 +300,7 @@ const Sidebar = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;
