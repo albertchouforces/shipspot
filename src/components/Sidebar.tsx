@@ -44,12 +44,11 @@ const Sidebar = ({
       )
     : []
 
-  // Group scenarios by category with proper type checking and default category handling
+  // Group scenarios by category
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
-      // Ensure category is never undefined or empty
-      const category = scenario.category?.trim() || 'Uncategorized'
+      const category = scenario.category || 'Uncategorized'
       if (!grouped[category]) {
         grouped[category] = []
       }
@@ -62,11 +61,32 @@ const Sidebar = ({
   useEffect(() => {
     const categories = Object.keys(categorizedScenarios)
     if (categories.length > 0) {
-      const initialExpandedState = categories.reduce((acc, category, index) => {
-        acc[category] = index === 0 // Only expand first category by default
-        return acc
-      }, {} as { [key: string]: boolean })
+      const initialExpandedState: { [key: string]: boolean } = {}
+      categories.forEach((category, index) => {
+        initialExpandedState[category] = index === 0 // Only expand first category by default
+      })
       setExpandedCategories(initialExpandedState)
+    }
+  }, []) // Run only once on mount
+
+  // Update expanded categories when new categories are added
+  useEffect(() => {
+    const currentCategories = Object.keys(categorizedScenarios)
+    const existingCategories = Object.keys(expandedCategories)
+    
+    // Check if we have any new categories
+    const hasNewCategories = currentCategories.some(category => !existingCategories.includes(category))
+    
+    if (hasNewCategories) {
+      setExpandedCategories(prev => {
+        const newState = { ...prev }
+        currentCategories.forEach(category => {
+          if (!(category in newState)) {
+            newState[category] = true // Expand new categories by default
+          }
+        })
+        return newState
+      })
     }
   }, [categorizedScenarios])
 
@@ -127,7 +147,7 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && (
+            {scenariosExpanded && Object.keys(categorizedScenarios).length > 0 && (
               <div className="divide-y divide-gray-100">
                 {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
                   <div key={category} className="bg-white">
@@ -144,7 +164,7 @@ const Sidebar = ({
                     </button>
                     
                     {/* Category Content */}
-                    {expandedCategories[category] && (
+                    {expandedCategories[category] && categoryScenarios && categoryScenarios.length > 0 && (
                       <div className="py-1 px-2">
                         {categoryScenarios.map((scenario) => (
                           <button
