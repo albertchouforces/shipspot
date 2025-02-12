@@ -32,6 +32,11 @@ type CategoryMap = {
 
 const DEFAULT_CATEGORY = 'Uncategorized';
 
+// Helper function to normalize category names
+const normalizeCategory = (category: string): string => {
+  return (category || '').trim().toLowerCase();
+};
+
 const Sidebar = ({
   scenarios,
   currentScenario,
@@ -62,11 +67,12 @@ const Sidebar = ({
 
     // First pass: collect all categories and initialize them
     scenarios.forEach(scenario => {
-      const category = scenario.category?.trim() || DEFAULT_CATEGORY;
+      const rawCategory = scenario.category?.trim() || DEFAULT_CATEGORY;
+      const normalizedCategory = normalizeCategory(rawCategory);
       
-      if (!categoryMap[category]) {
-        categoryMap[category] = {
-          name: category,
+      if (!categoryMap[normalizedCategory]) {
+        categoryMap[normalizedCategory] = {
+          name: rawCategory, // Keep original case for display
           scenarios: [],
           order: orderCounter++
         };
@@ -75,8 +81,8 @@ const Sidebar = ({
 
     // Second pass: populate scenarios into their categories
     scenarios.forEach(scenario => {
-      const category = scenario.category?.trim() || DEFAULT_CATEGORY;
-      categoryMap[category].scenarios.push(scenario);
+      const normalizedCategory = normalizeCategory(scenario.category || DEFAULT_CATEGORY);
+      categoryMap[normalizedCategory].scenarios.push(scenario);
     });
 
     // Sort categories by order and filter out empty ones
@@ -84,8 +90,8 @@ const Sidebar = ({
       .filter(([_, data]) => data.scenarios.length > 0)
       .sort((a, b) => {
         // Special handling for Uncategorized (always last)
-        if (a[0] === DEFAULT_CATEGORY) return 1;
-        if (b[0] === DEFAULT_CATEGORY) return -1;
+        if (normalizeCategory(a[0]) === normalizeCategory(DEFAULT_CATEGORY)) return 1;
+        if (normalizeCategory(b[0]) === normalizeCategory(DEFAULT_CATEGORY)) return -1;
         return a[1].order - b[1].order;
       })
       .reduce((acc, [key, value]) => {
@@ -99,7 +105,7 @@ const Sidebar = ({
     const initialExpandedState = Object.keys(categorizedScenarios).reduce(
       (acc, category) => ({
         ...acc,
-        [category]: true
+        [normalizeCategory(category)]: true
       }),
       {}
     );
@@ -138,15 +144,19 @@ const Sidebar = ({
   };
 
   const toggleCategory = (category: string) => {
+    const normalizedCategory = normalizeCategory(category);
     setExpandedCategories(prev => ({
       ...prev,
-      [category]: !prev[category]
+      [normalizedCategory]: !prev[normalizedCategory]
     }));
   };
 
   // Get ordered categories maintaining proper type safety
   const orderedCategories = useMemo(() => 
-    Object.keys(categorizedScenarios)
+    Object.keys(categorizedScenarios).map(key => ({
+      normalized: key,
+      original: categorizedScenarios[key][0]?.category || key
+    }))
   , [categorizedScenarios]);
 
   const hasContent = orderedCategories.length > 0;
@@ -172,28 +182,28 @@ const Sidebar = ({
             
             {scenariosExpanded && hasContent && (
               <div className="divide-y divide-gray-100">
-                {orderedCategories.map((category) => (
-                  <div key={category} className="bg-white">
+                {orderedCategories.map(({ normalized, original }) => (
+                  <div key={normalized} className="bg-white">
                     {/* Category Header */}
                     <button
-                      onClick={() => toggleCategory(category)}
+                      onClick={() => toggleCategory(normalized)}
                       className={`w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 ${
-                        category === DEFAULT_CATEGORY 
+                        normalizeCategory(original) === normalizeCategory(DEFAULT_CATEGORY)
                           ? 'border-gray-300/20' 
                           : 'border-blue-500/20'
                       }`}
                     >
-                      <span className="text-sm font-medium text-gray-600 ml-1">{category}</span>
-                      {expandedCategories[category] ? 
+                      <span className="text-sm font-medium text-gray-600 ml-1">{original}</span>
+                      {expandedCategories[normalized] ? 
                         <ChevronUp size={14} className="text-gray-400" /> : 
                         <ChevronDown size={14} className="text-gray-400" />
                       }
                     </button>
                     
                     {/* Category Content */}
-                    {expandedCategories[category] && categorizedScenarios[category] && (
+                    {expandedCategories[normalized] && categorizedScenarios[normalized] && (
                       <div className="py-1 px-2">
-                        {categorizedScenarios[category].map((scenario) => (
+                        {categorizedScenarios[normalized].map((scenario) => (
                           <button
                             key={scenario.id}
                             className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
