@@ -34,7 +34,7 @@ const Sidebar = ({
   onMarkerSizeChange,
   onResetMarkerSize,
 }: SidebarProps) => {
-  const [scenariosExpanded, setScenariosExpanded] = useState(true)
+  
   const [equipmentExpanded, setEquipmentExpanded] = useState(true)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
 
@@ -119,62 +119,36 @@ const Sidebar = ({
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
-          {/* Main Sections Container */}
-          <div className="border rounded-lg overflow-hidden shadow-sm">
-            {/* Ships Section Header */}
-            <button
-              onClick={() => setScenariosExpanded(!scenariosExpanded)}
-              className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              <span className="font-semibold text-sm text-gray-800">Ships</span>
-              {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {scenariosExpanded && categoryGroups.length > 0 && (
-              <div className="divide-y divide-gray-100">
-                {categoryGroups.map(({ category, scenarios: categoryScenarios }) => (
-                  <div key={category.id} className="bg-white">
-                    {/* Category Header */}
+          {/* Categories and their scenarios */}
+          {categoryGroups.map(({ category, scenarios: categoryScenarios }) => (
+            <div key={category.id} className="border rounded-lg overflow-hidden shadow-sm">
+              <button
+                onClick={() => toggleCategory(category.id)}
+                className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <span className="font-semibold text-sm text-gray-800">{category.name}</span>
+                {expandedCategories[category.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              
+              {expandedCategories[category.id] && (
+                <div className="p-2 space-y-1">
+                  {categoryScenarios.map((scenario) => (
                     <button
-                      onClick={() => toggleCategory(category.id)}
-                      className={`w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 ${
-                        category.id === 'uncategorized'
-                          ? 'border-gray-300/20' 
-                          : 'border-blue-500/20'
+                      key={scenario.id}
+                      className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                        currentScenario?.id === scenario.id
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
                       }`}
+                      onClick={() => handleScenarioSelect(scenario)}
                     >
-                      <span className="text-sm font-medium text-gray-600 ml-1">
-                        {category.name}
-                      </span>
-                      {expandedCategories[category.id] ? 
-                        <ChevronUp size={14} className="text-gray-400" /> : 
-                        <ChevronDown size={14} className="text-gray-400" />
-                      }
+                      {scenario.title}
                     </button>
-                    
-                    {/* Category Content */}
-                    {expandedCategories[category.id] && (
-                      <div className="py-1 px-2">
-                        {categoryScenarios.map((scenario) => (
-                          <button
-                            key={scenario.id}
-                            className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
-                              currentScenario?.id === scenario.id
-                                ? 'bg-blue-50 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                            onClick={() => handleScenarioSelect(scenario)}
-                          >
-                            {scenario.title}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
 
           {currentScenario && availableEquipment.length > 0 && (
             <>
