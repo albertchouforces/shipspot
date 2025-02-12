@@ -74,55 +74,35 @@ const Sidebar = ({
       }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories state with only the first category expanded
+  // Initialize expanded categories state with stored values or first category expanded
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+    
     const categories = Object.keys(categorizedScenarios).sort()
     const initialState: { [key: string]: boolean } = {}
     categories.forEach((category, index) => {
-      initialState[category] = index === 0 // Only expand the first category
+      initialState[category] = index === 0 // Only expand the first category initially
     })
     return initialState
   })
 
-  // Update expanded categories when scenarios change, maintaining only first category expanded
+  // Auto-select first scenario on initial load if none is selected
   useEffect(() => {
-    const sortedCategories = Object.keys(categorizedScenarios).sort()
-    
-    setExpandedCategories(() => {
-      const newState: { [key: string]: boolean } = {}
-      
-      // Set all categories to collapsed except the first one
-      sortedCategories.forEach((category, index) => {
-        newState[category] = index === 0
-      })
-      
-      return newState
-    })
-  }, [categorizedScenarios])
-
-  // Auto-select first scenario on initial load
-  useEffect(() => {
-    if (scenarios.length > 0) {
+    if (scenarios.length > 0 && !currentScenario) {
       const sortedCategories = Object.keys(categorizedScenarios).sort()
       if (sortedCategories.length > 0) {
         const firstCategory = sortedCategories[0]
         const firstScenario = categorizedScenarios[firstCategory]?.[0]
         
-        if (firstScenario && (!currentScenario || currentScenario.id !== firstScenario.id)) {
+        if (firstScenario) {
           handleScenarioSelect(firstScenario)
-          
-          // Ensure only the first category is expanded
-          setExpandedCategories(() => {
-            const newState: { [key: string]: boolean } = {}
-            sortedCategories.forEach((category, index) => {
-              newState[category] = index === 0
-            })
-            return newState
-          })
         }
       }
     }
-  }, [scenarios, categorizedScenarios])
+  }, [scenarios, categorizedScenarios, currentScenario])
 
   // Persist states to localStorage
   useEffect(() => {
@@ -170,18 +150,7 @@ const Sidebar = ({
       onResetZoom()
     }
     
-    // Find the category index
-    const sortedCategories = Object.keys(categorizedScenarios).sort()
-    const categoryIndex = sortedCategories.indexOf(scenario.category)
-    
-    // Only expand the category if it's the first one
-    if (scenario.category) {
-      setExpandedCategories(prev => ({
-        ...prev,
-        [scenario.category]: categoryIndex === 0
-      }))
-    }
-    
+    // Select first available equipment after a brief delay
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
         scenario.availableEquipment?.includes(eq.id)
