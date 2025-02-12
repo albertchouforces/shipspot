@@ -44,30 +44,41 @@ const Sidebar = ({
       )
     : []
 
-  // Group scenarios by category with proper type checking
+  // Group scenarios by category
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
-      const category = scenario.category || 'Uncategorized'
+      if (!scenario.category) return // Skip scenarios without a category
+      
+      const category = scenario.category.trim() // Trim whitespace
+      if (category === '') return // Skip empty categories
+      
       if (!grouped[category]) {
         grouped[category] = []
       }
       grouped[category].push(scenario)
     })
-    return grouped
+    
+    // Sort categories alphabetically
+    return Object.keys(grouped)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = grouped[key]
+        return acc
+      }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories - only expand the first category
+  // Initialize expanded categories
   useEffect(() => {
-    if (scenarios.length > 0) {
-      const categories = [...new Set(scenarios.map(s => s.category))]
+    const categories = Object.keys(categorizedScenarios)
+    if (categories.length > 0) {
       const initialExpandedState = categories.reduce((acc, category, index) => {
-        acc[category] = index === 0 // Only set the first category to true
+        acc[category] = index === 0 // Only expand the first category
         return acc
       }, {} as { [key: string]: boolean })
       setExpandedCategories(initialExpandedState)
     }
-  }, [scenarios])
+  }, [categorizedScenarios])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(null)
@@ -126,7 +137,7 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && (
+            {scenariosExpanded && Object.keys(categorizedScenarios).length > 0 && (
               <div className="divide-y divide-gray-100">
                 {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
                   <div key={category} className="bg-white">
@@ -162,6 +173,12 @@ const Sidebar = ({
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+            
+            {scenariosExpanded && Object.keys(categorizedScenarios).length === 0 && (
+              <div className="p-4 text-sm text-gray-500 text-center">
+                No scenarios available
               </div>
             )}
           </div>
