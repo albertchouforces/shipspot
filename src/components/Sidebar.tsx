@@ -28,7 +28,7 @@ const STORAGE_KEYS = {
 }
 
 const Sidebar = ({
-  scenarios,
+  scenarios = [], // Provide default empty array
   currentScenario,
   onScenarioSelect,
   selectedEquipment,
@@ -40,33 +40,57 @@ const Sidebar = ({
   onMarkerSizeChange,
   onResetMarkerSize,
 }: SidebarProps) => {
-  // Initialize states with localStorage values
+  // Initialize states with localStorage values and proper type checking
   const [scenariosExpanded, setScenariosExpanded] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
-    return saved ? JSON.parse(saved) : true
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
+      return saved ? JSON.parse(saved) : true
+    } catch {
+      return true
+    }
   })
   
   const [equipmentExpanded, setEquipmentExpanded] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
-    return saved ? JSON.parse(saved) : true
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
+      return saved ? JSON.parse(saved) : true
+    } catch {
+      return true
+    }
   })
   
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
-    return saved ? JSON.parse(saved) : {}
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
+      return saved ? JSON.parse(saved) : {}
+    } catch {
+      return {}
+    }
   })
 
-  // Persist state changes to localStorage
+  // Persist state changes to localStorage with error handling
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SCENARIOS_EXPANDED, JSON.stringify(scenariosExpanded))
+    try {
+      localStorage.setItem(STORAGE_KEYS.SCENARIOS_EXPANDED, JSON.stringify(scenariosExpanded))
+    } catch (error) {
+      console.error('Failed to save scenarios expanded state:', error)
+    }
   }, [scenariosExpanded])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.EQUIPMENT_EXPANDED, JSON.stringify(equipmentExpanded))
+    try {
+      localStorage.setItem(STORAGE_KEYS.EQUIPMENT_EXPANDED, JSON.stringify(equipmentExpanded))
+    } catch (error) {
+      console.error('Failed to save equipment expanded state:', error)
+    }
   }, [equipmentExpanded])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES_EXPANDED, JSON.stringify(expandedCategories))
+    try {
+      localStorage.setItem(STORAGE_KEYS.CATEGORIES_EXPANDED, JSON.stringify(expandedCategories))
+    } catch (error) {
+      console.error('Failed to save categories expanded state:', error)
+    }
   }, [expandedCategories])
 
   const availableEquipment = useMemo(() => {
@@ -76,7 +100,7 @@ const Sidebar = ({
     )
   }, [currentScenario])
 
-  // Group scenarios by category with memoization
+  // Group scenarios by category with memoization and proper type handling
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
@@ -89,7 +113,7 @@ const Sidebar = ({
     return grouped
   }, [scenarios])
 
-  // Initialize expanded categories
+  // Initialize expanded categories with proper type checking
   useEffect(() => {
     const categories = Object.keys(categorizedScenarios)
     
@@ -98,16 +122,9 @@ const Sidebar = ({
       
       // Ensure all categories have a state
       categories.forEach(category => {
-        if (!(category in newState)) {
+        if (typeof newState[category] === 'undefined') {
           // If this is the category of the current scenario, expand it
           newState[category] = currentScenario?.category === category
-        }
-      })
-      
-      // Clean up any categories that no longer exist
-      Object.keys(newState).forEach(category => {
-        if (!categories.includes(category)) {
-          delete newState[category]
         }
       })
       
@@ -169,8 +186,18 @@ const Sidebar = ({
     }))
   }
 
+  // Ensure we have valid scenarios before rendering
   if (!Array.isArray(scenarios) || scenarios.length === 0) {
-    return null
+    return (
+      <div className="w-64 bg-white border-r flex flex-col h-screen">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold text-gray-900">Ship Equipment Marker</h2>
+        </div>
+        <div className="flex-1 p-4">
+          <p className="text-sm text-gray-500">No scenarios available</p>
+        </div>
+      </div>
+    )
   }
 
   return (

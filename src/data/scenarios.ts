@@ -1,5 +1,17 @@
 import { Scenario } from '../types'
 
+// Ensure all scenarios have a category
+const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
+  ...scenario,
+  id: scenario.id || String(Date.now()),
+  title: scenario.title || 'Untitled Scenario',
+  category: scenario.category || 'Uncategorized',
+  questionImage: scenario.questionImage || null,
+  answerImage: scenario.answerImage || null,
+  markers: scenario.markers || [],
+  availableEquipment: scenario.availableEquipment || []
+})
+
 export const predefinedScenarios: Scenario[] = [
   {
     id: "scenario1",
@@ -46,7 +58,4 @@ export const predefinedScenarios: Scenario[] = [
     markers: [],
     availableEquipment: ["life-buoy", "radio", "anchor"]
   }
-].map(scenario => ({
-  ...scenario,
-  category: scenario.category || "Uncategorized" // Ensure category is never undefined
-}))
+].map(scenario => ensureCategory(scenario))
