@@ -74,15 +74,31 @@ const Sidebar = ({
       }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories state
+  // Initialize expanded categories state with only the first category expanded
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
-    const categories = Object.keys(categorizedScenarios)
+    const categories = Object.keys(categorizedScenarios).sort()
     const initialState: { [key: string]: boolean } = {}
-    categories.forEach((category) => {
-      initialState[category] = true // Always expand all categories initially
+    categories.forEach((category, index) => {
+      initialState[category] = index === 0 // Only expand the first category
     })
     return initialState
   })
+
+  // Update expanded categories when scenarios change, maintaining only first category expanded
+  useEffect(() => {
+    const sortedCategories = Object.keys(categorizedScenarios).sort()
+    
+    setExpandedCategories(prev => {
+      const newState: { [key: string]: boolean } = {}
+      
+      // Set all categories to collapsed except the first one
+      sortedCategories.forEach((category, index) => {
+        newState[category] = index === 0
+      })
+      
+      return newState
+    })
+  }, [categorizedScenarios])
 
   // Auto-select first scenario on initial load
   useEffect(() => {
@@ -95,40 +111,18 @@ const Sidebar = ({
         if (firstScenario && (!currentScenario || currentScenario.id !== firstScenario.id)) {
           handleScenarioSelect(firstScenario)
           
-          // Ensure the first category is expanded
-          setExpandedCategories(prev => ({
-            ...prev,
-            [firstCategory]: true
-          }))
+          // Ensure only the first category is expanded
+          setExpandedCategories(prev => {
+            const newState: { [key: string]: boolean } = {}
+            sortedCategories.forEach((category, index) => {
+              newState[category] = index === 0
+            })
+            return newState
+          })
         }
       }
     }
   }, [scenarios, categorizedScenarios])
-
-  // Update expanded categories when scenarios change
-  useEffect(() => {
-    const categories = Object.keys(categorizedScenarios)
-    
-    setExpandedCategories(prev => {
-      const newState = { ...prev }
-      
-      // Ensure all categories exist in the state
-      categories.forEach(category => {
-        if (!(category in newState)) {
-          newState[category] = true // Always expand categories by default
-        }
-      })
-      
-      // Remove any categories that no longer exist
-      Object.keys(newState).forEach(category => {
-        if (!categories.includes(category)) {
-          delete newState[category]
-        }
-      })
-      
-      return newState
-    })
-  }, [categorizedScenarios])
 
   // Persist states to localStorage
   useEffect(() => {
@@ -176,11 +170,15 @@ const Sidebar = ({
       onResetZoom()
     }
     
-    // Ensure the category is expanded
+    // Find the category index
+    const sortedCategories = Object.keys(categorizedScenarios).sort()
+    const categoryIndex = sortedCategories.indexOf(scenario.category)
+    
+    // Only expand the category if it's the first one
     if (scenario.category) {
       setExpandedCategories(prev => ({
         ...prev,
-        [scenario.category]: true
+        [scenario.category]: categoryIndex === 0
       }))
     }
     
