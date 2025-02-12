@@ -48,6 +48,7 @@ const Sidebar = ({
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
+      // Ensure category is never undefined or empty
       const category = scenario.category || 'Uncategorized'
       if (!grouped[category]) {
         grouped[category] = []
@@ -57,38 +58,22 @@ const Sidebar = ({
     return grouped
   }, [scenarios])
 
-  // Initialize expanded categories
+  // Initialize and update expanded categories whenever categorizedScenarios changes
   useEffect(() => {
     const categories = Object.keys(categorizedScenarios)
     if (categories.length > 0) {
-      const initialExpandedState: { [key: string]: boolean } = {}
-      categories.forEach((category, index) => {
-        initialExpandedState[category] = index === 0 // Only expand first category by default
-      })
-      setExpandedCategories(initialExpandedState)
-    }
-  }, []) // Run only once on mount
-
-  // Update expanded categories when new categories are added
-  useEffect(() => {
-    const currentCategories = Object.keys(categorizedScenarios)
-    const existingCategories = Object.keys(expandedCategories)
-    
-    // Check if we have any new categories
-    const hasNewCategories = currentCategories.some(category => !existingCategories.includes(category))
-    
-    if (hasNewCategories) {
       setExpandedCategories(prev => {
         const newState = { ...prev }
-        currentCategories.forEach(category => {
+        categories.forEach(category => {
+          // If category doesn't exist in state, set it to true (expanded)
           if (!(category in newState)) {
-            newState[category] = true // Expand new categories by default
+            newState[category] = true
           }
         })
         return newState
       })
     }
-  }, [categorizedScenarios])
+  }, [categorizedScenarios]) // Depend on categorizedScenarios to ensure updates
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(null)
@@ -128,6 +113,10 @@ const Sidebar = ({
     }))
   }
 
+  // Ensure we have categories to display
+  const categories = Object.keys(categorizedScenarios)
+  const hasCategories = categories.length > 0
+
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
       <div className="p-4 border-b bg-white">
@@ -147,9 +136,9 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && Object.keys(categorizedScenarios).length > 0 && (
+            {scenariosExpanded && hasCategories && (
               <div className="divide-y divide-gray-100">
-                {Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
+                {categories.map((category) => (
                   <div key={category} className="bg-white">
                     {/* Category Header */}
                     <button
@@ -164,9 +153,9 @@ const Sidebar = ({
                     </button>
                     
                     {/* Category Content */}
-                    {expandedCategories[category] && categoryScenarios && categoryScenarios.length > 0 && (
+                    {expandedCategories[category] && categorizedScenarios[category] && (
                       <div className="py-1 px-2">
-                        {categoryScenarios.map((scenario) => (
+                        {categorizedScenarios[category].map((scenario) => (
                           <button
                             key={scenario.id}
                             className={`w-full text-left p-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
