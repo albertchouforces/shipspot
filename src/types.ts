@@ -15,18 +15,9 @@ export type Marker = {
 export type Scenario = {
   id: string
   title: string
-  category: string
+  category: string // Making sure category is required and documented
   questionImage: string | null
   answerImage: string | null
   markers: Marker[]
-  availableEquipment: string[]
-}
-
-export type CategoryGroup = {
-  category: {
-    id: string
-    name: string
-    order: number
-  }
-  scenarios: Scenario[]
+  availableEquipment: string[] // Array of equipment IDs that are available for this scenario
 }
