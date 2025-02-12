@@ -44,11 +44,12 @@ const Sidebar = ({
       )
     : []
 
-  // Group scenarios by category with proper type checking
+  // Group scenarios by category with proper type checking and default category handling
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
-      const category = scenario.category || 'Uncategorized'
+      // Ensure category is never undefined or empty
+      const category = scenario.category?.trim() || 'Uncategorized'
       if (!grouped[category]) {
         grouped[category] = []
       }
@@ -57,17 +58,17 @@ const Sidebar = ({
     return grouped
   }, [scenarios])
 
-  // Initialize expanded categories - only expand the first category
+  // Initialize expanded categories
   useEffect(() => {
-    if (scenarios.length > 0) {
-      const categories = [...new Set(scenarios.map(s => s.category))]
+    const categories = Object.keys(categorizedScenarios)
+    if (categories.length > 0) {
       const initialExpandedState = categories.reduce((acc, category, index) => {
-        acc[category] = index === 0 // Only set the first category to true
+        acc[category] = index === 0 // Only expand first category by default
         return acc
       }, {} as { [key: string]: boolean })
       setExpandedCategories(initialExpandedState)
     }
-  }, [scenarios])
+  }, [categorizedScenarios])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     setSelectedEquipment(null)
