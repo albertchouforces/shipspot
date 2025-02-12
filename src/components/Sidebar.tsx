@@ -28,7 +28,7 @@ const STORAGE_KEYS = {
 }
 
 const Sidebar = ({
-  scenarios = [], // Provide default empty array
+  scenarios = [],
   currentScenario,
   onScenarioSelect,
   selectedEquipment,
@@ -40,67 +40,18 @@ const Sidebar = ({
   onMarkerSizeChange,
   onResetMarkerSize,
 }: SidebarProps) => {
-  // Initialize states with localStorage values and proper type checking
+  // Initialize states with localStorage values
   const [scenariosExpanded, setScenariosExpanded] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
-      return saved ? JSON.parse(saved) : true
-    } catch {
-      return true
-    }
+    const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
+    return saved ? JSON.parse(saved) : true
   })
   
   const [equipmentExpanded, setEquipmentExpanded] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
-      return saved ? JSON.parse(saved) : true
-    } catch {
-      return true
-    }
-  })
-  
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
-      return saved ? JSON.parse(saved) : {}
-    } catch {
-      return {}
-    }
+    const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
+    return saved ? JSON.parse(saved) : true
   })
 
-  // Persist state changes to localStorage with error handling
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.SCENARIOS_EXPANDED, JSON.stringify(scenariosExpanded))
-    } catch (error) {
-      console.error('Failed to save scenarios expanded state:', error)
-    }
-  }, [scenariosExpanded])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.EQUIPMENT_EXPANDED, JSON.stringify(equipmentExpanded))
-    } catch (error) {
-      console.error('Failed to save equipment expanded state:', error)
-    }
-  }, [equipmentExpanded])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.CATEGORIES_EXPANDED, JSON.stringify(expandedCategories))
-    } catch (error) {
-      console.error('Failed to save categories expanded state:', error)
-    }
-  }, [expandedCategories])
-
-  const availableEquipment = useMemo(() => {
-    if (!currentScenario?.availableEquipment) return []
-    return equipmentTypes.filter(equipment => 
-      currentScenario.availableEquipment.includes(equipment.id)
-    )
-  }, [currentScenario])
-
-  // Group scenarios by category with memoization and proper type handling
+  // Group scenarios by category
   const categorizedScenarios = useMemo(() => {
     const grouped: { [key: string]: Scenario[] } = {}
     scenarios.forEach(scenario => {
@@ -113,24 +64,61 @@ const Sidebar = ({
     return grouped
   }, [scenarios])
 
-  // Initialize expanded categories with proper type checking
+  // Initialize expanded categories state with all categories
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
+    const savedCategories = saved ? JSON.parse(saved) : {}
+    
+    // Get all unique categories from scenarios
+    const allCategories = Array.from(new Set(scenarios.map(s => s.category || 'Uncategorized')))
+    
+    // Create initial state with all categories
+    const initialState: { [key: string]: boolean } = {}
+    allCategories.forEach(category => {
+      // If we have a saved state for this category, use it, otherwise default to true
+      initialState[category] = savedCategories[category] ?? true
+    })
+    
+    return initialState
+  })
+
+  // Update expanded categories when scenarios change
   useEffect(() => {
-    const categories = Object.keys(categorizedScenarios)
+    const allCategories = Array.from(new Set(scenarios.map(s => s.category || 'Uncategorized')))
     
     setExpandedCategories(prev => {
       const newState = { ...prev }
       
-      // Ensure all categories have a state
-      categories.forEach(category => {
-        if (typeof newState[category] === 'undefined') {
-          // If this is the category of the current scenario, expand it
-          newState[category] = currentScenario?.category === category
+      // Add any new categories
+      allCategories.forEach(category => {
+        if (!(category in newState)) {
+          newState[category] = true
         }
       })
       
       return newState
     })
-  }, [categorizedScenarios, currentScenario])
+  }, [scenarios])
+
+  // Persist states to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SCENARIOS_EXPANDED, JSON.stringify(scenariosExpanded))
+  }, [scenariosExpanded])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.EQUIPMENT_EXPANDED, JSON.stringify(equipmentExpanded))
+  }, [equipmentExpanded])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES_EXPANDED, JSON.stringify(expandedCategories))
+  }, [expandedCategories])
+
+  const availableEquipment = useMemo(() => {
+    if (!currentScenario?.availableEquipment) return []
+    return equipmentTypes.filter(equipment => 
+      currentScenario.availableEquipment.includes(equipment.id)
+    )
+  }, [currentScenario])
 
   const handleEquipmentSelect = (equipment: Equipment) => {
     if (!equipment) return
@@ -143,7 +131,6 @@ const Sidebar = ({
       onDisableHandTool()
     }
     
-    // Small delay to ensure proper state reset
     setTimeout(() => {
       setSelectedEquipment(equipment)
     }, 100)
@@ -167,7 +154,6 @@ const Sidebar = ({
       }))
     }
     
-    // Small delay to ensure proper state reset before selecting first equipment
     setTimeout(() => {
       const firstEquipment = equipmentTypes.find(eq => 
         scenario.availableEquipment?.includes(eq.id)
@@ -179,14 +165,12 @@ const Sidebar = ({
   }
 
   const toggleCategory = (category: string) => {
-    if (!category) return
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
     }))
   }
 
-  // Ensure we have valid scenarios before rendering
   if (!Array.isArray(scenarios) || scenarios.length === 0) {
     return (
       <div className="w-64 bg-white border-r flex flex-col h-screen">
