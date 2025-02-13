@@ -27,6 +27,9 @@ const STORAGE_KEYS = {
   CATEGORIES_EXPANDED: 'shipspot_categories_expanded',
 }
 
+const DEFAULT_CATEGORY = 'Halifax-class'
+const DEFAULT_SCENARIO_TITLE = 'Engine Room Fire Systems'
+
 const Sidebar = ({
   scenarios = [],
   currentScenario,
@@ -64,45 +67,66 @@ const Sidebar = ({
       grouped[category].push(scenario)
     })
 
-    // Sort categories alphabetically
     return Object.keys(grouped)
       .sort()
       .reduce((acc, category) => {
-        // Sort scenarios within each category alphabetically
         acc[category] = grouped[category].sort((a, b) => a.title.localeCompare(b.title))
         return acc
       }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories state with stored values or first category expanded
+  // Initialize expanded categories state with only current category expanded
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
-    if (saved) {
-      return JSON.parse(saved)
+    const savedCategories = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
+    if (savedCategories) {
+      const parsed = JSON.parse(savedCategories)
+      // On page refresh, only keep the current category expanded
+      const currentCategory = currentScenario?.category || DEFAULT_CATEGORY
+      const resetExpanded: { [key: string]: boolean } = {}
+      Object.keys(parsed).forEach(category => {
+        resetExpanded[category] = category === currentCategory
+      })
+      return resetExpanded
     }
     
-    const categories = Object.keys(categorizedScenarios).sort()
+    // Initial state with only default/current category expanded
+    const categories = Object.keys(categorizedScenarios)
     const initialState: { [key: string]: boolean } = {}
-    categories.forEach((category, index) => {
-      initialState[category] = index === 0 // Only expand the first category initially
+    categories.forEach((category) => {
+      initialState[category] = category === (currentScenario?.category || DEFAULT_CATEGORY)
     })
     return initialState
   })
 
-  // Auto-select first scenario on initial load if none is selected
+  // Select default scenario on initial load and page refresh
   useEffect(() => {
     if (scenarios.length > 0 && !currentScenario) {
-      const sortedCategories = Object.keys(categorizedScenarios).sort()
-      if (sortedCategories.length > 0) {
-        const firstCategory = sortedCategories[0]
-        const firstScenario = categorizedScenarios[firstCategory]?.[0]
+      const defaultScenario = scenarios.find(
+        scenario => 
+          scenario.category === DEFAULT_CATEGORY && 
+          scenario.title === DEFAULT_SCENARIO_TITLE
+      )
+      
+      if (defaultScenario) {
+        handleScenarioSelect(defaultScenario)
         
-        if (firstScenario) {
-          handleScenarioSelect(firstScenario)
+        // Ensure only the default category is expanded
+        const resetExpanded: { [key: string]: boolean } = {}
+        Object.keys(expandedCategories).forEach(category => {
+          resetExpanded[category] = category === DEFAULT_CATEGORY
+        })
+        setExpandedCategories(resetExpanded)
+
+        // Select first available equipment for the default scenario
+        const firstEquipment = equipmentTypes.find(eq => 
+          defaultScenario.availableEquipment?.includes(eq.id)
+        )
+        if (firstEquipment) {
+          setSelectedEquipment(firstEquipment)
         }
       }
     }
-  }, [scenarios, categorizedScenarios, currentScenario])
+  }, [scenarios])
 
   // Persist states to localStorage
   useEffect(() => {
@@ -149,6 +173,13 @@ const Sidebar = ({
     if (onResetZoom) {
       onResetZoom()
     }
+    
+    // Expand only the selected scenario's category
+    const resetExpanded: { [key: string]: boolean } = {}
+    Object.keys(expandedCategories).forEach(category => {
+      resetExpanded[category] = category === scenario.category
+    })
+    setExpandedCategories(resetExpanded)
     
     // Select first available equipment after a brief delay
     setTimeout(() => {
@@ -200,34 +231,45 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
-              <div key={category} className="bg-white border-t first:border-t-0">
-                <button
-                  onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center justify-between p-2.5 bg-gray-50/80 hover:bg-gray-50 border-l-4 border-blue-500/20"
-                >
-                  <span className="text-sm font-medium text-gray-600 ml-1">{category}</span>
-                  {expandedCategories[category] ? 
-                    <ChevronUp size={14} className="text-gray-400" /> : 
-                    <ChevronDown size={14} className="text-gray-400" />
-                  }
-                </button>
-                
-                {expandedCategories[category] && categoryScenarios?.map((scenario) => (
+            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => {
+              const isCurrentCategory = currentScenario?.category === category
+              return (
+                <div key={category} className="bg-white border-t first:border-t-0">
                   <button
-                    key={scenario.id}
-                    className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
-                      currentScenario?.id === scenario.id
-                        ? 'bg-blue-50 text-blue-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50'
+                    onClick={() => toggleCategory(category)}
+                    className={`w-full flex items-center justify-between p-2.5 hover:bg-gray-50 transition-colors ${
+                      isCurrentCategory 
+                        ? 'bg-blue-50 border-l-4 border-blue-500'
+                        : 'bg-gray-50/80 border-l-4 border-transparent'
                     }`}
-                    onClick={() => handleScenarioSelect(scenario)}
                   >
-                    {scenario.title}
+                    <span className={`text-sm font-medium ml-1 ${
+                      isCurrentCategory ? 'text-blue-700' : 'text-gray-600'
+                    }`}>
+                      {category}
+                    </span>
+                    {expandedCategories[category] ? 
+                      <ChevronUp size={14} className={isCurrentCategory ? 'text-blue-500' : 'text-gray-400'} /> : 
+                      <ChevronDown size={14} className={isCurrentCategory ? 'text-blue-500' : 'text-gray-400'} />
+                    }
                   </button>
-                ))}
-              </div>
-            ))}
+                  
+                  {expandedCategories[category] && categoryScenarios?.map((scenario) => (
+                    <button
+                      key={scenario.id}
+                      className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                        currentScenario?.id === scenario.id
+                          ? 'bg-blue-100 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleScenarioSelect(scenario)}
+                    >
+                      {scenario.title}
+                    </button>
+                  ))}
+                </div>
+              )
+            })}
           </div>
 
           {currentScenario && availableEquipment.length > 0 && (

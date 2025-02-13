@@ -16,50 +16,37 @@ function App() {
   const [markerSize, setMarkerSize] = useState(24) // Default marker size
   const imageViewerRef = useRef<{ handleResetZoom: () => void } | null>(null)
 
-  // Initialize with first scenario, load user progress, and set initial equipment
+  // Load saved data and set default scenario on mount
   useEffect(() => {
+    // Load user progress
     const savedProgress = localStorage.getItem('shipUserProgress')
     if (savedProgress) {
       setUserProgress(JSON.parse(savedProgress))
     }
 
+    // Load saved scenarios
     const savedScenarios = localStorage.getItem('shipScenarios')
     if (savedScenarios) {
       const parsedScenarios = JSON.parse(savedScenarios)
       setScenarios(parsedScenarios)
     }
 
+    // Load saved marker size
     const savedMarkerSize = localStorage.getItem('shipMarkerSize')
     if (savedMarkerSize) {
       setMarkerSize(Number(savedMarkerSize))
     }
-
-    // Set initial scenario
-    if (scenarios.length > 0) {
-      const initialScenario = scenarios[0]
-      setCurrentScenario(initialScenario)
-      
-      // Set initial equipment
-      const firstAvailableEquipment = equipmentTypes.find(equipment => 
-        initialScenario.availableEquipment.includes(equipment.id)
-      )
-      if (firstAvailableEquipment) {
-        setSelectedEquipment(firstAvailableEquipment)
-      }
-    }
   }, [])
 
-  // Save progress to localStorage when it changes
+  // Save data to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('shipUserProgress', JSON.stringify(userProgress))
   }, [userProgress])
 
-  // Save scenarios to localStorage when they change
   useEffect(() => {
     localStorage.setItem('shipScenarios', JSON.stringify(scenarios))
   }, [scenarios])
 
-  // Save marker size to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('shipMarkerSize', String(markerSize))
   }, [markerSize])
@@ -114,6 +101,9 @@ function App() {
   const handleScenarioSelect = (scenario: Scenario) => {
     setCurrentScenario(scenario)
     setShowAnswer(false)
+    
+    // Store the selected scenario in localStorage
+    localStorage.setItem('lastSelectedScenario', JSON.stringify(scenario))
   }
 
   const handleZoomPanChange = (isZoomedOrPanned: boolean) => {
