@@ -76,7 +76,15 @@ export const predefinedScenarios: Scenario[] = [
     markers: [],
     availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   }
-].map(scenario => ensureCategory(scenario))
+].map(scenario => {
+  const processed = ensureCategory(scenario)
+  // Add cache-busting query parameter to image URLs
+  return {
+    ...processed,
+    questionImage: processed.questionImage ? `${processed.questionImage}?v=${VERSION}` : null,
+    answerImage: processed.answerImage ? `${processed.answerImage}?v=${VERSION}` : null,
+  }
+})
 
 // Helper function to sort scenarios by category and title
 export const getSortedScenarios = (scenarios: Scenario[]): Scenario[] => {

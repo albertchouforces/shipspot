@@ -3,11 +3,11 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Function to register and handle service worker
+// Function to handle service worker registration and updates
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
     try {
-      // Clear browser cache before registration
+      // Clear existing caches before registration
       if (window.caches) {
         const cacheKeys = await window.caches.keys()
         await Promise.all(
@@ -15,9 +15,9 @@ const registerServiceWorker = async () => {
         )
       }
 
-      // Register service worker
+      // Register service worker with cache control
       const registration = await navigator.serviceWorker.register('/service-worker.js', {
-        updateViaCache: 'none' // Bypass browser cache for service worker
+        updateViaCache: 'none'
       })
 
       // Immediately check for updates
@@ -54,11 +54,33 @@ const registerServiceWorker = async () => {
   }
 }
 
-// Register service worker before mounting app
-registerServiceWorker().then(() => {
+// Clear localStorage if version mismatch
+const handleVersionCheck = () => {
+  const currentVersion = '1.0.1' // Update this when deploying new versions
+  const storedVersion = localStorage.getItem('appVersion')
+  
+  if (storedVersion !== currentVersion) {
+    // Clear all localStorage data
+    localStorage.clear()
+    // Set new version
+    localStorage.setItem('appVersion', currentVersion)
+  }
+}
+
+// Initialize app with proper cache and version control
+const initializeApp = async () => {
+  // Check version and clear cache if needed
+  handleVersionCheck()
+  
+  // Register service worker
+  await registerServiceWorker()
+  
+  // Mount app
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
-})
+}
+
+initializeApp()
