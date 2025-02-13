@@ -5,58 +5,49 @@ import Sidebar from './components/Sidebar'
 import { Equipment, Marker, Scenario } from './types'
 import { predefinedScenarios } from './data/scenarios'
 
-const STORAGE_KEYS = {
-  SCENARIOS: 'shipScenarios',
-  USER_PROGRESS: 'shipUserProgress',
-  MARKER_SIZE: 'shipMarkerSize',
-}
-
 function App() {
-  const [scenarios] = useState<Scenario[]>(() => {
-    // Try to load scenarios from localStorage
-    const savedScenarios = localStorage.getItem(STORAGE_KEYS.SCENARIOS)
-    if (savedScenarios) {
-      try {
-        const parsed = JSON.parse(savedScenarios)
-        return Array.isArray(parsed) ? parsed : predefinedScenarios
-      } catch {
-        return predefinedScenarios
-      }
-    }
-    // If no saved scenarios, use predefined ones and save them
-    localStorage.setItem(STORAGE_KEYS.SCENARIOS, JSON.stringify(predefinedScenarios))
-    return predefinedScenarios
-  })
-
+  const [scenarios, setScenarios] = useState<Scenario[]>(predefinedScenarios)
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null)
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
   const [showAnswer, setShowAnswer] = useState(false)
-  const [userProgress, setUserProgress] = useState<{ [key: string]: Marker[] }>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.USER_PROGRESS)
-    return saved ? JSON.parse(saved) : {}
-  })
+  const [userProgress, setUserProgress] = useState<{ [key: string]: Marker[] }>({})
   const [isHandToolActive, setIsHandToolActive] = useState(false)
-  const [markerSize, setMarkerSize] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.MARKER_SIZE)
-    return saved ? Number(saved) : 24
-  })
+  const [markerSize, setMarkerSize] = useState(24) // Default marker size
   const imageViewerRef = useRef<{ handleResetZoom: () => void } | null>(null)
 
-  // Ensure scenarios are always saved when they change
+  // Load saved data and set default scenario on mount
   useEffect(() => {
-    if (Array.isArray(scenarios) && scenarios.length > 0) {
-      localStorage.setItem(STORAGE_KEYS.SCENARIOS, JSON.stringify(scenarios))
+    // Load user progress
+    const savedProgress = localStorage.getItem('shipUserProgress')
+    if (savedProgress) {
+      setUserProgress(JSON.parse(savedProgress))
     }
-  }, [scenarios])
 
-  // Save user progress when it changes
+    // Load saved scenarios
+    const savedScenarios = localStorage.getItem('shipScenarios')
+    if (savedScenarios) {
+      const parsedScenarios = JSON.parse(savedScenarios)
+      setScenarios(parsedScenarios)
+    }
+
+    // Load saved marker size
+    const savedMarkerSize = localStorage.getItem('shipMarkerSize')
+    if (savedMarkerSize) {
+      setMarkerSize(Number(savedMarkerSize))
+    }
+  }, [])
+
+  // Save data to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.USER_PROGRESS, JSON.stringify(userProgress))
+    localStorage.setItem('shipUserProgress', JSON.stringify(userProgress))
   }, [userProgress])
 
-  // Save marker size when it changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.MARKER_SIZE, String(markerSize))
+    localStorage.setItem('shipScenarios', JSON.stringify(scenarios))
+  }, [scenarios])
+
+  useEffect(() => {
+    localStorage.setItem('shipMarkerSize', String(markerSize))
   }, [markerSize])
 
   const getCurrentMarkers = () => {
@@ -107,9 +98,11 @@ function App() {
   }
 
   const handleScenarioSelect = (scenario: Scenario) => {
-    if (!scenario) return
     setCurrentScenario(scenario)
     setShowAnswer(false)
+    
+    // Store the selected scenario in localStorage
+    localStorage.setItem('lastSelectedScenario', JSON.stringify(scenario))
   }
 
   const handleZoomPanChange = (isZoomedOrPanned: boolean) => {
@@ -130,7 +123,7 @@ function App() {
   }
 
   const handleResetMarkerSize = () => {
-    setMarkerSize(24)
+    setMarkerSize(24) // Reset to default size
   }
 
   return (
