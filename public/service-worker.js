@@ -1,8 +1,9 @@
-// Service Worker version
-const CACHE_VERSION = Date.now().toString()
+// Service Worker version - use timestamp and version string for better control
+const APP_VERSION = '1.0.1'
+const CACHE_VERSION = `${APP_VERSION}-${Date.now()}`
 const CACHE_NAME = `shipspot-${CACHE_VERSION}`
 
-// Assets to cache
+// Assets to cache - include version in the cache key
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -10,54 +11,68 @@ const ASSETS_TO_CACHE = [
   '/src/App.tsx'
 ]
 
-// Install event - cache basic assets
+// Function to clean up old caches
+const clearOldCaches = async () => {
+  const cacheKeys = await caches.keys()
+  const oldCaches = cacheKeys.filter(key => 
+    key.startsWith('shipspot-') && key !== CACHE_NAME
+  )
+  return Promise.all(oldCaches.map(key => caches.delete(key)))
+}
+
+// Install event - cache basic assets and force activation
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE)
-    })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME)
+      await cache.addAll(ASSETS_TO_CACHE)
+      await self.skipWaiting() // Force activation
+    })()
   )
-  // Activate new service worker immediately
-  self.skipWaiting()
 })
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and take control
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith('shipspot-') && cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName)
-          }
-          return null
-        }).filter(Boolean)
-      )
-    }).then(() => {
-      // Take control of all clients immediately
-      return clients.claim()
-    })
+    (async () => {
+      await clearOldCaches()
+      await clients.claim() // Take control of all clients
+    })()
   )
 })
 
 // Helper function to check if URL is an image
-const isImageUrl = (url) => {
-  return url.match(/\.(jpg|jpeg|png|gif|svg)(\?.*)?$/i)
-}
+const isImageUrl = (url) => url.match(/\.(jpg|jpeg|png|gif|svg)(\?.*)?$/i)
 
 // Helper function to check if URL is a navigation request
-const isNavigationRequest = (request) => {
-  return request.mode === 'navigate'
+const isNavigationRequest = (request) => request.mode === 'navigate'
+
+// Helper function to add version to URLs
+const addVersionToUrl = (url) => {
+  const versionedUrl = new URL(url, self.location.origin)
+  versionedUrl.searchParams.set('v', CACHE_VERSION)
+  return versionedUrl.toString()
 }
 
-// Fetch event - custom caching strategy
+// Fetch event with improved caching strategy
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
   // Handle navigation requests
   if (isNavigationRequest(request)) {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      (async () => {
+        try {
+          // Always try network first for HTML
+          const response = await fetch(request)
+          const cache = await caches.open(CACHE_NAME)
+          await cache.put(request, response.clone())
+          return response
+        } catch (error) {
+          const cachedResponse = await caches.match('/index.html')
+          return cachedResponse || new Response('Navigation failed', { status: 404 })
+        }
+      })()
     )
     return
   }
@@ -65,47 +80,41 @@ self.addEventListener('fetch', (event) => {
   // Handle image requests
   if (isImageUrl(request.url)) {
     event.respondWith(
-      fetch(request, { cache: 'no-store' })
-        .then(response => {
-          // Clone the response before caching
-          const responseToCache = response.clone()
-          
-          // Cache the new version
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(request, responseToCache))
-          
+      (async () => {
+        // Try network first
+        try {
+          const response = await fetch(request, { 
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' }
+          })
+          const cache = await caches.open(CACHE_NAME)
+          await cache.put(request, response.clone())
           return response
-        })
-        .catch(() => {
-          // If network request fails, try to get from cache
-          return caches.match(request)
-        })
+        } catch (error) {
+          // Fall back to cache
+          const cachedResponse = await caches.match(request)
+          return cachedResponse || new Response('Image not found', { status: 404 })
+        }
+      })()
     )
     return
   }
 
-  // Default fetch handler
+  // Default network-first strategy for other requests
   event.respondWith(
-    fetch(request)
-      .then(response => {
-        // Don't cache if not successful
-        if (!response || response.status !== 200) {
-          return response
+    (async () => {
+      try {
+        const response = await fetch(request)
+        if (response && response.status === 200) {
+          const cache = await caches.open(CACHE_NAME)
+          await cache.put(request, response.clone())
         }
-
-        // Clone the response before caching
-        const responseToCache = response.clone()
-        
-        // Cache the new version
-        caches.open(CACHE_NAME)
-          .then(cache => cache.put(request, responseToCache))
-        
         return response
-      })
-      .catch(() => {
-        // If network request fails, try to get from cache
-        return caches.match(request)
-      })
+      } catch (error) {
+        const cachedResponse = await caches.match(request)
+        return cachedResponse || new Response('Resource not found', { status: 404 })
+      }
+    })()
   )
 })
 
@@ -115,3 +124,8 @@ self.addEventListener('message', (event) => {
     self.skipWaiting()
   }
 })
+
+// Periodic cache cleanup
+setInterval(async () => {
+  await clearOldCaches()
+}, 1000 * 60 * 60) // Every hour
