@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
 }
 
 function App() {
-  const [scenarios, setScenarios] = useState<Scenario[]>(() => {
+  const [scenarios] = useState<Scenario[]>(() => {
     // Try to load scenarios from localStorage
     const savedScenarios = localStorage.getItem(STORAGE_KEYS.SCENARIOS)
     if (savedScenarios) {
