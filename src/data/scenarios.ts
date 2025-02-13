@@ -66,15 +66,6 @@ export const predefinedScenarios: Scenario[] = [
     answerImage: "images/Halifax/4DeckA.png",
     markers: [],
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid/Gallay Range Guard"]
-  },
-  {
-    id: "hdw01deck",
-    title: "01 Deck",
-    category: "Harry DeWolf-class",
-    questionImage: "images/q1.png",
-    answerImage: "images/a1.png",
-    markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   }
 ].map(scenario => {
   const processed = ensureCategory(scenario)
