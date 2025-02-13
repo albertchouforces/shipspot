@@ -11,6 +11,17 @@ const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
   availableEquipment: scenario.availableEquipment || []
 })
 
+// Helper function to validate scenario data
+const validateScenario = (scenario: Scenario): boolean => {
+  return (
+    typeof scenario.id === 'string' &&
+    typeof scenario.title === 'string' &&
+    typeof scenario.category === 'string' &&
+    Array.isArray(scenario.markers) &&
+    Array.isArray(scenario.availableEquipment)
+  )
+}
+
 // Predefined scenarios with consistent categorization
 export const predefinedScenarios: Scenario[] = [
   {
@@ -71,18 +82,46 @@ export const predefinedScenarios: Scenario[] = [
 
 // Helper function to sort scenarios by category and title
 export const getSortedScenarios = (scenarios: Scenario[]): Scenario[] => {
-  return [...scenarios].sort((a, b) => {
-    // First sort by category
-    const categoryComparison = a.category.localeCompare(b.category)
-    if (categoryComparison !== 0) return categoryComparison
-    
-    // Then sort by title within each category
-    return a.title.localeCompare(b.title)
-  })
+  if (!Array.isArray(scenarios)) return []
+  
+  return [...scenarios]
+    .filter(validateScenario)
+    .sort((a, b) => {
+      // First sort by category
+      const categoryComparison = a.category.localeCompare(b.category)
+      if (categoryComparison !== 0) return categoryComparison
+      
+      // Then sort by title within each category
+      return a.title.localeCompare(b.title)
+    })
 }
 
 // Helper function to get unique categories from scenarios
 export const getUniqueCategories = (scenarios: Scenario[]): string[] => {
-  const categories = new Set(scenarios.map(s => s.category))
+  if (!Array.isArray(scenarios)) return []
+  
+  const categories = new Set(
+    scenarios
+      .filter(validateScenario)
+      .map(s => s.category)
+  )
   return Array.from(categories).sort()
+}
+
+// Function to load scenarios with fallback to predefined
+export const loadScenarios = (): Scenario[] => {
+  try {
+    const saved = localStorage.getItem('shipScenarios')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed) && parsed.every(validateScenario)) {
+        return parsed
+      }
+    }
+  } catch (error) {
+    console.error('Error loading scenarios:', error)
+  }
+  
+  // Fallback to predefined scenarios
+  return predefinedScenarios
 }
