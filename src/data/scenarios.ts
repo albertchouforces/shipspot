@@ -14,7 +14,7 @@ const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
 // Predefined scenarios with consistent categorization
 export const predefinedScenarios: Scenario[] = [
   {
-    id: "scenario1",
+    id: "01deck",
     title: "01 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/01Deck.png",
@@ -23,7 +23,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon"]
   },
   {
-    id: "scenario2",
+    id: "1deck",
     title: "1 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/1Deck.png",
@@ -32,7 +32,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "scenario3",
+    id: "2deck",
     title: "2 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/2Deck.png",
@@ -41,7 +41,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "scenario4",
+    id: "3deck",
     title: "3 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/3Deck.png",
@@ -50,7 +50,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Halon", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "scenario5",
+    id: "4deck",
     title: "4 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/4Deck.png",
