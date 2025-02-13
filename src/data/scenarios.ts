@@ -77,11 +77,11 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   },
   {
-    id: "scenario6",
-    title: "Test",
+    id: "scenario7",
+    title: "Forward Deck Equipment 2",
     category: "Harry DeWolf-class",
-    questionImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/q1.png",
-    answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
+    questionImage: "images/q1.png",
+    answerImage: "images/a1.png",
     markers: [],
     availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   }
