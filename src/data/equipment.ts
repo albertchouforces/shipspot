@@ -16,4 +16,9 @@ export const equipmentTypes: Equipment[] = [
   { id: 'life-buoy', name: 'Life Buoy', icon: 'LifeBuoy', color: 'orange' },
   { id: 'radio', name: 'Emergency Radio', icon: 'Radio', color: 'blue' },
   { id: 'anchor', name: 'Anchor Point', icon: 'Anchor', color: 'purple' },
+  { id: 'Magazine-Flood-and-Spray', name: 'Magazine Flood and Spray', icon: 'ShowerHead', color: 'red' },
+  { id: 'Halon', name: 'Halon', icon: 'FireExtinguisher', color: 'green' },
+  { id: 'AFFF-system', name: 'AFFF', icon: 'FireExtinguisher', color: 'blue' },
+  { id: 'AFFF/Halon', name: 'AFFF/Halon', icon: 'FireExtinguisher', color: 'purple' },
+  { id: 'Quartzoid/Gallay Range Guard', name: 'Quartzoid/Gallay Range Guard', icon: 'ShowerHead', color: 'orange' },
 ]

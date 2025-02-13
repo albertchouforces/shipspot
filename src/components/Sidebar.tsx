@@ -28,7 +28,7 @@ const STORAGE_KEYS = {
 }
 
 const DEFAULT_CATEGORY = 'Halifax-class'
-const DEFAULT_SCENARIO_TITLE = 'Engine Room Fire Systems'
+const DEFAULT_SCENARIO_TITLE = '01 Deck'
 
 const Sidebar = ({
   scenarios = [],
@@ -203,7 +203,7 @@ const Sidebar = ({
     return (
       <div className="w-64 bg-white border-r flex flex-col h-screen">
         <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Ship Equipment Marker</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Ship Compartment Marker</h2>
         </div>
         <div className="flex-1 p-4">
           <p className="text-sm text-gray-500">No scenarios available</p>
@@ -215,7 +215,7 @@ const Sidebar = ({
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
       <div className="p-4 border-b bg-white">
-        <h2 className="text-lg font-semibold text-gray-900">Ship Equipment Marker</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Ship Compartment Marker</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -280,7 +280,7 @@ const Sidebar = ({
                   onClick={() => setEquipmentExpanded(!equipmentExpanded)}
                   className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
-                  <span className="font-semibold text-sm text-gray-800">Equipment Types</span>
+                  <span className="font-semibold text-sm text-gray-800">Compartment Types</span>
                   {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
                 
@@ -291,15 +291,15 @@ const Sidebar = ({
                       return (
                         <button
                           key={equipment.id}
-                          className={`w-full px-3 py-2 rounded-md flex items-center gap-2 transition-all duration-200 text-sm ${
+                          className={`w-full px-3 py-2 rounded-md flex items-start gap-2 transition-all duration-200 text-sm min-h-[2.5rem] ${
                             selectedEquipment?.id === equipment.id && !isHandToolActive
                               ? 'bg-blue-50 text-blue-700 font-medium'
                               : 'text-gray-600 hover:bg-gray-50'
                           }`}
                           onClick={() => handleEquipmentSelect(equipment)}
                         >
-                          <IconComponent size={16} style={{ color: equipment.color }} />
-                          <span className="truncate">{equipment.name}</span>
+                          <IconComponent size={16} className="mt-0.5 flex-shrink-0" style={{ color: equipment.color }} />
+                          <span className="text-left leading-tight break-words">{equipment.name}</span>
                         </button>
                       )
                     })}
@@ -322,7 +322,7 @@ const Sidebar = ({
                 <div className="flex items-center gap-2">
                   <input
                     type="range"
-                    min="16"
+                    min="8"
                     max="48"
                     value={markerSize}
                     onChange={(e) => onMarkerSizeChange(Number(e.target.value))}
@@ -335,7 +335,7 @@ const Sidebar = ({
               {/* Help Text */}
               <div className="bg-amber-50 border rounded-lg p-3">
                 <p className="text-xs text-amber-700">
-                  Click on the image to place markers for the selected equipment type. Markers can only be placed when the image is not zoomed or panned.
+                  Click on the image to place markers for the selected compartment type. Markers can only be placed when the image is not zoomed or panned.
                 </p>
               </div>
             </>

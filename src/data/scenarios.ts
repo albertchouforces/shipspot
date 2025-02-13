@@ -15,48 +15,57 @@ const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
 export const predefinedScenarios: Scenario[] = [
   {
     id: "scenario1",
-    title: "Engine Room Safety Equipment",
-    category: "Harry DeWolf-class",
-    questionImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/q1.png",
-    answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
+    title: "01 Deck",
+    category: "Halifax-class",
+    questionImage: "images/Halifax/01Deck.png",
+    answerImage: "images/Halifax/01DeckA.png",
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon"]
   },
   {
     id: "scenario2",
-    title: "Bridge Equipment Layout",
-    category: "Harry DeWolf-class",
-    questionImage: "https://images.unsplash.com/photo-1566552881560-0be862a7c445?auto=format&fit=crop&q=80&w=2000",
-    answerImage: "https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=2000",
+    title: "1 Deck",
+    category: "Halifax-class",
+    questionImage: "images/Halifax/1Deck.png",
+    answerImage: "images/Halifax/1DeckA.png",
     markers: [],
-    availableEquipment: ["first-aid"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
   },
   {
     id: "scenario3",
-    title: "Deck Safety Equipment",
-    category: "Harry DeWolf-class",
-    questionImage: "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&q=80&w=2000",
-    answerImage: "https://images.unsplash.com/photo-1520437358207-323b43b50729?auto=format&fit=crop&q=80&w=2000",
+    title: "2 Deck",
+    category: "Halifax-class",
+    questionImage: "images/Halifax/2Deck.png",
+    answerImage: "images/Halifax/2DeckA.png",
     markers: [],
-    availableEquipment: ["life-buoy", "radio", "anchor"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
   },
   {
     id: "scenario4",
-    title: "Engine Room Fire Systems",
+    title: "3 Deck",
     category: "Halifax-class",
-    questionImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/q1.png",
-    answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
+    questionImage: "images/Halifax/3Deck.png",
+    answerImage: "images/Halifax/3DeckA.png",
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "hose-station"]
+    availableEquipment: ["Halon", "Quartzoid/Gallay Range Guard"]
   },
   {
     id: "scenario5",
-    title: "Forward Deck Equipment",
+    title: "4 Deck",
     category: "Halifax-class",
-    questionImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/q1.png",
-    answerImage: "https://raw.githubusercontent.com/albertchouforces/shipspot/refs/heads/main/public/images/a1.png",
+    questionImage: "images/Halifax/4Deck.png",
+    answerImage: "images/Halifax/4DeckA.png",
     markers: [],
-    availableEquipment: ["life-buoy", "radio", "anchor"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid/Gallay Range Guard"]
+  },
+  {
+    id: "scenario6",
+    title: "Forward Deck Equipment",
+    category: "Harry DeWolf-class",
+    questionImage: "images/q1.png",
+    answerImage: "images/a1.png",
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   }
 ].map(scenario => ensureCategory(scenario))
 
