@@ -4,7 +4,6 @@ import ImageViewer from './components/ImageViewer'
 import Sidebar from './components/Sidebar'
 import { Equipment, Marker, Scenario } from './types'
 import { predefinedScenarios } from './data/scenarios'
-import { equipmentTypes } from './data/equipment'
 
 function App() {
   const [scenarios, setScenarios] = useState<Scenario[]>(predefinedScenarios)
