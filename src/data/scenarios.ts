@@ -14,8 +14,8 @@ const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
   id: scenario.id || String(Date.now()),
   title: scenario.title?.trim() || 'Untitled Scenario',
   category: scenario.category?.trim() || 'Uncategorized',
-  questionImage: addVersionToUrl(scenario.questionImage),
-  answerImage: addVersionToUrl(scenario.answerImage),
+  questionImage: addVersionToUrl(scenario.questionImage || null),
+  answerImage: addVersionToUrl(scenario.answerImage || null),
   markers: scenario.markers || [],
   availableEquipment: scenario.availableEquipment || []
 })
