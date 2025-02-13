@@ -347,7 +347,7 @@ const Sidebar = ({
       <div className="p-4 border-t bg-white">
         <div className="text-[11px] text-gray-500 space-y-1 text-center">
           <p className="leading-relaxed">
-            (Version 1.0) This is a professional development learning project. For more information please contact the Learning Support Centre Product Development Lead (Pacific) at{' '}
+            (Version 1.1) This is a professional development learning project. For more information please contact the Learning Support Centre Product Development Lead (Pacific) at{' '}
             <a 
               href="mailto:joshua.hawthorne@ecn.forces.gc.ca"
               className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
