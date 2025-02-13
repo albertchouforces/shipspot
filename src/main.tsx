@@ -6,14 +6,9 @@ import './index.css'
 // Register service worker for cache control
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').then(
-      (registration) => {
-        console.log('ServiceWorker registration successful')
-      },
-      (err) => {
+    navigator.serviceWorker.register('/service-worker.js').catch((err) => {
         console.log('ServiceWorker registration failed: ', err)
-      }
-    )
+      })
   })
 }
 
