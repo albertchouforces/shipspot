@@ -32,7 +32,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon"]
   },
   {
-    id: "1deck",
+    id: "h1deck",
     title: "1 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/1Deck.png",
@@ -41,7 +41,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "2deck",
+    id: "h2deck",
     title: "2 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/2Deck.png",
@@ -50,7 +50,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "3deck",
+    id: "h3deck",
     title: "3 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/3Deck.png",
@@ -59,7 +59,7 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Halon", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "4deck",
+    id: "h4deck",
     title: "4 Deck",
     category: "Halifax-class",
     questionImage: "images/Halifax/4Deck.png",
@@ -68,17 +68,8 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid/Gallay Range Guard"]
   },
   {
-    id: "scenario6",
-    title: "Forward Deck Equipment",
-    category: "Harry DeWolf-class",
-    questionImage: "images/q1.png",
-    answerImage: "images/a1.png",
-    markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
-  },
-  {
-    id: "scenario7",
-    title: "Forward Deck Equipment 2",
+    id: "hdw01deck",
+    title: "01 Deck",
     category: "Harry DeWolf-class",
     questionImage: "images/q1.png",
     answerImage: "images/a1.png",
