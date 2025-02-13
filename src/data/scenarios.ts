@@ -1,12 +1,21 @@
 import { Scenario } from '../types'
 
+// Add version timestamp to force cache refresh
+const VERSION = Date.now()
+
+// Helper function to add version to image URLs
+const addVersionToUrl = (url: string | null): string | null => {
+  if (!url) return null
+  return `${url}?v=${VERSION}`
+}
+
 // Helper function to ensure all required fields are present and valid
 const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
   id: scenario.id || String(Date.now()),
   title: scenario.title?.trim() || 'Untitled Scenario',
   category: scenario.category?.trim() || 'Uncategorized',
-  questionImage: scenario.questionImage || null,
-  answerImage: scenario.answerImage || null,
+  questionImage: addVersionToUrl(scenario.questionImage),
+  answerImage: addVersionToUrl(scenario.answerImage),
   markers: scenario.markers || [],
   availableEquipment: scenario.availableEquipment || []
 })
