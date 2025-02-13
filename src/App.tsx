@@ -17,15 +17,6 @@ function App() {
 
   // Load saved data and set default scenario on mount
   useEffect(() => {
-    // Add timestamp to image URLs to prevent caching
-    const timestamp = new Date().getTime()
-    const updatedScenarios = scenarios.map(scenario => ({
-      ...scenario,
-      questionImage: scenario.questionImage ? `${scenario.questionImage}?t=${timestamp}` : null,
-      answerImage: scenario.answerImage ? `${scenario.answerImage}?t=${timestamp}` : null,
-    }))
-    setScenarios(updatedScenarios)
-
     // Load user progress
     const savedProgress = localStorage.getItem('shipUserProgress')
     if (savedProgress) {
