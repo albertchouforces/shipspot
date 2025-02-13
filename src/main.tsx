@@ -21,7 +21,7 @@ const checkVersion = async () => {
         })
       }
       // Reload the application
-      window.location.reload()
+      window.location.reload(true)
     }
   } catch (error) {
     console.warn('Version check failed:', error)
@@ -38,12 +38,8 @@ document.addEventListener('visibilitychange', () => {
   }
 })
 
-const rootElement = document.getElementById('root')
-if (!rootElement) throw new Error('Root element not found')
-
-const root = createRoot(rootElement)
-root.render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-  </StrictMode>
+  </StrictMode>,
 )
