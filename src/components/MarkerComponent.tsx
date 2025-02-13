@@ -15,14 +15,21 @@ const MarkerComponent = ({ marker, onRemove, showAnswer, opacity = 1, size = 24 
   // Dynamically get the icon component from lucide-react
   const IconComponent = (Icons as any)[marker.equipment.icon] || Icons.HelpCircle
 
-  // Convert hex/named color to RGBA with transparency
-  const getRgbaBackground = (color: string): string => {
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null
+  }
+
+  // Helper function to get RGB values from any color
+  const getRgbValues = (color: string): { r: number; g: number; b: number } => {
     // For hex colors
     if (color.startsWith('#')) {
-      const r = parseInt(color.slice(1, 3), 16)
-      const g = parseInt(color.slice(3, 5), 16)
-      const b = parseInt(color.slice(5, 7), 16)
-      return `rgba(${r}, ${g}, ${b}, 0.15)`
+      return hexToRgb(color) || { r: 0, g: 0, b: 0 }
     }
     
     // For named colors, create a temporary element to get RGB values
@@ -32,12 +39,31 @@ const MarkerComponent = ({ marker, onRemove, showAnswer, opacity = 1, size = 24 
     const computedColor = window.getComputedStyle(tempEl).color
     document.body.removeChild(tempEl)
     
-    // Convert rgb(r, g, b) to rgba(r, g, b, 0.15)
-    return computedColor.replace('rgb', 'rgba').replace(')', ', 0.15)')
+    // Parse rgb(r, g, b) format
+    const match = computedColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
+    if (match) {
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10)
+      }
+    }
+    
+    return { r: 0, g: 0, b: 0 }
+  }
+
+  // Helper function to create a lighter version of the color
+  const getLighterColor = (color: string): string => {
+    const { r, g, b } = getRgbValues(color)
+    // Mix with white (255, 255, 255) with 85% of the original color
+    const lightR = Math.round(r + (255 - r) * 0.85)
+    const lightG = Math.round(g + (255 - g) * 0.85)
+    const lightB = Math.round(b + (255 - b) * 0.85)
+    return `rgb(${lightR}, ${lightG}, ${lightB})`
   }
 
   const markerStyle: CSSProperties = {
-    backgroundColor: getRgbaBackground(marker.equipment.color),
+    backgroundColor: getLighterColor(marker.equipment.color),
     padding: '4px',
     boxShadow: `
       0 0 0 2px white,
