@@ -34,6 +34,12 @@ export interface ImageViewerRef {
   handleResetZoom: () => void
 }
 
+interface SyntheticMouseEvent extends React.MouseEvent<HTMLDivElement> {
+  currentTarget: {
+    getBoundingClientRect: () => DOMRect;
+  };
+}
+
 const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({ 
   image, 
   answerImage,
@@ -175,39 +181,14 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     return { x: percentX, y: percentY }
   }, [scale, position, imageDimensions])
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault()
-    
-    const delta = -e.deltaY
-    const newScale = scale * (1 + delta * 0.001)
-    const boundedScale = Math.min(Math.max(newScale, 1), 4)
-
-    if (containerRef.current && imageDimensions) {
-      const container = containerRef.current
-      const rect = container.getBoundingClientRect()
-      
-      const mouseX = e.clientX - rect.left
-      const mouseY = e.clientY - rect.top
-      
-      const scaleChange = boundedScale - scale
-      const newX = position.x - (mouseX - rect.width / 2) * scaleChange / scale
-      const newY = position.y - (mouseY - rect.height / 2) * scaleChange / scale
-      
-      const constrainedPosition = constrainPosition(newX, newY)
-      
-      setScale(boundedScale)
-      setPosition(constrainedPosition)
-    }
-  }, [scale, position, constrainPosition, imageDimensions])
-
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isHandToolActive) {
       setIsDragging(true)
       setStartPanPosition({ x: e.clientX - position.x, y: e.clientY - position.y })
     }
   }
 
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging && isHandToolActive) {
       const newX = e.clientX - startPanPosition.x
       const newY = e.clientY - startPanPosition.y
@@ -238,23 +219,68 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
 
     const markerPosition = calculateMarkerPosition(e.clientX, e.clientY)
     if (markerPosition) {
-      const syntheticEvent = {
+      const syntheticEvent: SyntheticMouseEvent = {
         ...e,
         currentTarget: {
-          ...e.currentTarget,
           getBoundingClientRect: () => ({
             left: 0,
             top: 0,
             width: 100,
-            height: 100
+            height: 100,
+            right: 100,
+            bottom: 100,
+            x: 0,
+            y: 0,
+            toJSON() {
+            return {
+              left: this.left,
+              top: this.top,
+              width: this.width,
+              height: this.height,
+              right: this.right,
+              bottom: this.bottom,
+              x: this.x,
+              y: this.y
+            };
+          }
           })
-        },
-        clientX: markerPosition.x,
-        clientY: markerPosition.y
+        }
       }
+
+      // Update clientX and clientY
+      Object.defineProperties(syntheticEvent, {
+        clientX: { value: markerPosition.x },
+        clientY: { value: markerPosition.y }
+      })
+
       onImageClick(syntheticEvent)
     }
   }
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    
+    const delta = -e.deltaY
+    const newScale = scale * (1 + delta * 0.001)
+    const boundedScale = Math.min(Math.max(newScale, 1), 4)
+
+    if (containerRef.current && imageDimensions) {
+      const container = containerRef.current
+      const rect = container.getBoundingClientRect()
+      
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+      
+      const scaleChange = boundedScale - scale
+      const newX = position.x - (mouseX - rect.width / 2) * scaleChange / scale
+      const newY = position.y - (mouseY - rect.height / 2) * scaleChange / scale
+      
+      const constrainedPosition = constrainPosition(newX, newY)
+      
+      setScale(boundedScale)
+      setPosition(constrainedPosition)
+    }
+  }, [scale, position, constrainPosition, imageDimensions])
 
   const handleZoomIn = (e: React.MouseEvent) => {
     e.stopPropagation()
