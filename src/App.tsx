@@ -84,12 +84,8 @@ function App() {
     return userProgress[currentScenario.id] || []
   }
 
-  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleImageClick = (x: number, y: number) => {
     if (!selectedEquipment || !currentScenario || isHandToolActive) return
-
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
 
     const newMarker: Marker = {
       id: Date.now(),

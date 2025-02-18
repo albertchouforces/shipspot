@@ -1,7 +1,7 @@
 import { Eye, EyeOff, Hand, Maximize2, Trash2, ZoomIn, ZoomOut } from 'lucide-react'
 import { Marker } from '../types'
 import MarkerComponent from './MarkerComponent'
-import { useState, useCallback, useRef, MouseEvent, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, MouseEvent as ReactMouseEvent } from 'react'
 
 const ANSWER_OVERLAY_OPACITY = 0.5;
 const MARKERS_OPACITY = 1.0;
@@ -20,7 +20,7 @@ interface ImageViewerProps {
   answerImage?: string | null
   showAnswer?: boolean
   markers: Marker[]
-  onImageClick: (e: React.MouseEvent<HTMLDivElement>) => void
+  onImageClick: (x: number, y: number) => void
   onMarkerRemove: (id: number) => void
   onClearAll: () => void
   isHandToolActive: boolean
@@ -32,12 +32,6 @@ interface ImageViewerProps {
 
 export interface ImageViewerRef {
   handleResetZoom: () => void
-}
-
-interface SyntheticMouseEvent extends React.MouseEvent<HTMLDivElement> {
-  currentTarget: {
-    getBoundingClientRect: () => DOMRect;
-  };
 }
 
 const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({ 
@@ -181,14 +175,14 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     return { x: percentX, y: percentY }
   }, [scale, position, imageDimensions])
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (isHandToolActive) {
       setIsDragging(true)
       setStartPanPosition({ x: e.clientX - position.x, y: e.clientY - position.y })
     }
   }
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (isDragging && isHandToolActive) {
       const newX = e.clientX - startPanPosition.x
       const newY = e.clientY - startPanPosition.y
@@ -210,7 +204,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     setShowToolbar(true)
   }
 
-  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleImageClick = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (isHandToolActive || isDragging || !imageDimensions) return
 
     if (toolbarRef.current?.contains(e.target as Node)) {
@@ -219,45 +213,11 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
 
     const markerPosition = calculateMarkerPosition(e.clientX, e.clientY)
     if (markerPosition) {
-      const syntheticEvent: SyntheticMouseEvent = {
-        ...e,
-        currentTarget: {
-          getBoundingClientRect: () => ({
-            left: 0,
-            top: 0,
-            width: 100,
-            height: 100,
-            right: 100,
-            bottom: 100,
-            x: 0,
-            y: 0,
-            toJSON() {
-            return {
-              left: this.left,
-              top: this.top,
-              width: this.width,
-              height: this.height,
-              right: this.right,
-              bottom: this.bottom,
-              x: this.x,
-              y: this.y
-            };
-          }
-          })
-        }
-      }
-
-      // Update clientX and clientY
-      Object.defineProperties(syntheticEvent, {
-        clientX: { value: markerPosition.x },
-        clientY: { value: markerPosition.y }
-      })
-
-      onImageClick(syntheticEvent)
+      onImageClick(markerPosition.x, markerPosition.y)
     }
   }
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault()
     
     const delta = -e.deltaY
@@ -282,7 +242,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     }
   }, [scale, position, constrainPosition, imageDimensions])
 
-  const handleZoomIn = (e: React.MouseEvent) => {
+  const handleZoomIn = (e: ReactMouseEvent) => {
     e.stopPropagation()
     const newScale = Math.min(scale * 1.2, 4)
     setScale(newScale)
@@ -290,7 +250,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     setPosition(constrainedPosition)
   }
 
-  const handleZoomOut = (e: React.MouseEvent) => {
+  const handleZoomOut = (e: ReactMouseEvent) => {
     e.stopPropagation()
     const newScale = Math.max(scale / 1.2, 1)
     setScale(newScale)
@@ -298,7 +258,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     setPosition(constrainedPosition)
   }
 
-  const handleResetZoom = (e?: React.MouseEvent) => {
+  const handleResetZoom = (e?: ReactMouseEvent) => {
     if (e) e.stopPropagation()
     setScale(1)
     setPosition({ x: 0, y: 0 })
