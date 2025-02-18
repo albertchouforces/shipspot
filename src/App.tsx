@@ -85,7 +85,7 @@ function App() {
   }
 
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!selectedEquipment || !currentScenario) return
+    if (!selectedEquipment || !currentScenario || isHandToolActive) return
 
     const rect = e.currentTarget.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width) * 100
@@ -131,11 +131,8 @@ function App() {
     setShowAnswer(false)
   }
 
-  const handleZoomPanChange = (isZoomedOrPanned: boolean) => {
-    if (isZoomedOrPanned) {
-      setSelectedEquipment(null)
-      setIsHandToolActive(true)
-    }
+  const handleZoomPanChange = () => {
+    // Removed automatic hand tool activation
   }
 
   const handleResetZoom = () => {

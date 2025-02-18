@@ -151,18 +151,26 @@ const Sidebar = ({
   const handleEquipmentSelect = (equipment: Equipment) => {
     if (!equipment) return
     
-    setSelectedEquipment(null)
-    if (onResetZoom) {
-      onResetZoom()
-    }
-    if (onDisableHandTool && isHandToolActive) {
+    // If hand tool is active, disable it when selecting equipment
+    if (isHandToolActive && onDisableHandTool) {
       onDisableHandTool()
     }
     
-    setTimeout(() => {
+    // If clicking the currently selected equipment while hand tool is active,
+    // deselect it
+    if (selectedEquipment?.id === equipment.id && isHandToolActive) {
+      setSelectedEquipment(null)
+    } else {
       setSelectedEquipment(equipment)
-    }, 100)
+    }
   }
+
+  // Effect to deselect equipment when hand tool is activated
+  useEffect(() => {
+    if (isHandToolActive && selectedEquipment) {
+      setSelectedEquipment(null)
+    }
+  }, [isHandToolActive, selectedEquipment, setSelectedEquipment])
 
   const handleScenarioSelect = (scenario: Scenario) => {
     if (!scenario) return
@@ -292,7 +300,7 @@ const Sidebar = ({
                         <button
                           key={equipment.id}
                           className={`w-full px-3 py-2 rounded-md flex items-start gap-2 transition-all duration-200 text-sm min-h-[2.5rem] ${
-                            selectedEquipment?.id === equipment.id && !isHandToolActive
+                            selectedEquipment?.id === equipment.id
                               ? 'bg-blue-50 text-blue-700 font-medium'
                               : 'text-gray-600 hover:bg-gray-50'
                           }`}
@@ -322,7 +330,7 @@ const Sidebar = ({
                 <div className="flex items-center gap-2">
                   <input
                     type="range"
-                    min="8"
+                    min="4"
                     max="48"
                     value={markerSize}
                     onChange={(e) => onMarkerSizeChange(Number(e.target.value))}
@@ -335,7 +343,7 @@ const Sidebar = ({
               {/* Help Text */}
               <div className="bg-amber-50 border rounded-lg p-3">
                 <p className="text-xs text-amber-700">
-                  Click on the image to place markers for the selected compartment type. Markers can only be placed when the image is not zoomed or panned.
+                  Click on the image to place markers for the selected compartment type. You can zoom and pan using the hand tool for precise placement. Markers can be placed even while zoomed in.
                 </p>
               </div>
             </>
