@@ -6,7 +6,7 @@ import { getSortedScenarios } from '../data/scenarios'
 import { equipmentTypes } from '../data/equipment'
 
 interface SidebarProps {
-  scenarios: Scenario[]
+  scenarios: Scenario[]  // Explicitly typed as Scenario array
   currentScenario: Scenario | null
   onScenarioSelect: (scenario: Scenario) => void
   selectedEquipment: Equipment | null
@@ -31,7 +31,7 @@ const STORAGE_KEYS = {
 const DEFAULT_CATEGORY = 'Halifax-class'
 
 const Sidebar = ({
-  scenarios = [],
+  scenarios = [] as Scenario[],  // Explicitly type the default value
   currentScenario,
   onScenarioSelect,
   selectedEquipment,
@@ -230,7 +230,7 @@ const Sidebar = ({
                     }
                   </button>
                   
-                  {expandedCategories[category] && categoryScenarios?.map((scenario) => (
+                  {expandedCategories[category] && categoryScenarios?.map((scenario: Scenario) => (
                     <button
                       key={scenario.id}
                       className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
