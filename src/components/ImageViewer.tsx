@@ -57,6 +57,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [startPanPosition, setStartPanPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
+  const [isRightClickDragging, setIsRightClickDragging] = useState(false)
   const isZoomedOrPannedRef = useRef(false)
 
   const isZoomedOrPanned = scale !== 1 || position.x !== 0 || position.y !== 0
@@ -185,27 +186,37 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   }, [scale, position, imageDimensions])
 
   const handleMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    if (isHandToolActive) {
+    // Check if it's a right click (button 2)
+    if (e.button === 2) {
+      e.preventDefault() // Prevent context menu
+      setIsRightClickDragging(true)
+      setStartPanPosition({ x: e.clientX - position.x, y: e.clientY - position.y })
+    } else if (isHandToolActive) {
       setIsDragging(true)
       setStartPanPosition({ x: e.clientX - position.x, y: e.clientY - position.y })
     }
   }, [isHandToolActive, position])
 
   const handleMouseMove = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    if (isDragging && isHandToolActive) {
+    if ((isDragging && isHandToolActive) || isRightClickDragging) {
       const newX = e.clientX - startPanPosition.x
       const newY = e.clientY - startPanPosition.y
       const constrainedPosition = constrainPosition(newX, newY)
       setPosition(constrainedPosition)
     }
-  }, [isDragging, isHandToolActive, startPanPosition, constrainPosition])
+  }, [isDragging, isHandToolActive, isRightClickDragging, startPanPosition, constrainPosition])
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
+  const handleMouseUp = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    if (e.button === 2) {
+      setIsRightClickDragging(false)
+    } else {
+      setIsDragging(false)
+    }
   }, [])
 
   const handleMouseLeave = useCallback(() => {
     setIsDragging(false)
+    setIsRightClickDragging(false)
     setShowToolbar(false)
   }, [])
 
@@ -214,7 +225,8 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   }, [])
 
   const handleImageClick = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    if (isHandToolActive || isDragging || !imageDimensions) return
+    // Only handle left clicks for marker placement
+    if (e.button !== 0 || isHandToolActive || isDragging || isRightClickDragging || !imageDimensions) return
 
     if (toolbarRef.current?.contains(e.target as Node)) {
       return
@@ -224,7 +236,11 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     if (markerPosition) {
       onImageClick(markerPosition.x, markerPosition.y)
     }
-  }, [isHandToolActive, isDragging, imageDimensions, calculateMarkerPosition, onImageClick])
+  }, [isHandToolActive, isDragging, isRightClickDragging, imageDimensions, calculateMarkerPosition, onImageClick])
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault() // Prevent the context menu from appearing
+  }, [])
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -292,15 +308,18 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
         className={`relative w-full h-full border rounded-lg overflow-hidden bg-white select-none ${
           isHandToolActive
             ? isDragging ? 'cursor-grabbing' : 'cursor-grab'
-            : 'cursor-crosshair'
+            : isRightClickDragging
+              ? 'cursor-grabbing'
+              : 'cursor-crosshair'
         }`}
         onClick={handleImageClick}
-        onWheel={handleWheel}
+        onContextMenu={handleContextMenu}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         onMouseEnter={handleMouseEnter}
+        onWheel={handleWheel}
       >
         <div
           className="absolute w-full h-full flex items-center justify-center transition-transform duration-100 ease-out select-none"
@@ -384,7 +403,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
                   ? 'bg-blue-100 text-blue-700' 
                   : 'hover:bg-gray-100'
               }`}
-              title="Hand Tool"
+              title="Hand Tool (or use right-click to pan)"
             >
               <Hand size={20} />
             </button>
