@@ -40,7 +40,7 @@ const LayerControls = memo(({
       <div className="flex items-center gap-1.5 p-2">
         {/* Title and Show/Hide All Button */}
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-gray-700">
+          <span className="text-sm font-semibold text-blue-700">
             Answer Key:
           </span>
           <button
