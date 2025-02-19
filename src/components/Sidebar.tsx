@@ -101,19 +101,17 @@ const Sidebar = ({
   // Get available equipment for current scenario
   const availableEquipment = useMemo(() => {
     if (!currentScenario?.availableEquipment) return []
-    return equipmentTypes.filter((equipment: Equipment) => 
+    return equipmentTypes.filter((equipment) => 
       currentScenario.availableEquipment.includes(equipment.id)
     )
   }, [currentScenario])
 
   // Auto-select first equipment when scenario changes
   useEffect(() => {
-    // Only select first equipment when scenario changes AND there is no selected equipment
-    // AND there are available equipment options
     if (currentScenario && availableEquipment.length > 0 && !selectedEquipment) {
       const firstEquipment = availableEquipment[0]
-      // Add a check to prevent selecting if the equipment is already selected
-      if (firstEquipment.id !== selectedEquipment?.id) {
+      // Check if it's a different equipment before selecting
+      if (!selectedEquipment || firstEquipment.id !== selectedEquipment.id) {
         setSelectedEquipment(firstEquipment)
       }
     }
