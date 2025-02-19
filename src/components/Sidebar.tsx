@@ -268,7 +268,7 @@ const Sidebar = ({
                     onClick={() => setEquipmentExpanded(!equipmentExpanded)}
                     className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
                   >
-                    <span className="font-semibold text-sm text-gray-800">Compartment Types</span>
+                    <span className="font-semibold text-sm text-gray-800">Fire System Markers</span>
                     {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
                   
@@ -324,7 +324,7 @@ const Sidebar = ({
               {/* Help Text */}
               <div className="bg-amber-50 border rounded-lg p-3">
                 <p className="text-xs text-amber-700">
-                  Click on the image to place markers for the selected compartment type. You can zoom and pan using the hand tool for precise placement. Markers can be placed even while zoomed in.
+                  Select a Deck and Marker type. Click on the image to place markers, use the Answer Key to test your knowledge or as a reference.
                 </p>
               </div>
             </>
