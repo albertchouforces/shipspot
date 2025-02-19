@@ -42,9 +42,6 @@ const Sidebar = ({
   markerSize,
   onMarkerSizeChange,
   onResetMarkerSize,
-  visibleLayers,
-  onToggleLayer,
-  onToggleAllLayers,
 }: SidebarProps) => {
   // State for section expansion
   const [scenariosExpanded, setScenariosExpanded] = useState(() => {
@@ -104,7 +101,7 @@ const Sidebar = ({
   // Get available equipment for current scenario
   const availableEquipment = useMemo(() => {
     if (!currentScenario?.availableEquipment) return []
-    return equipmentTypes.filter(equipment => 
+    return equipmentTypes.filter((equipment: Equipment) => 
       currentScenario.availableEquipment.includes(equipment.id)
     )
   }, [currentScenario])
