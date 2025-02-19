@@ -69,7 +69,7 @@ const Sidebar = ({
     const sortedScenarios = getSortedScenarios(scenarios)
     const grouped: { [key: string]: Scenario[] } = {}
     
-    sortedScenarios.forEach(scenario => {
+    sortedScenarios.forEach((scenario: Scenario) => {
       const category = scenario.category || 'Uncategorized'
       if (!grouped[category]) {
         grouped[category] = []
@@ -79,14 +79,14 @@ const Sidebar = ({
 
     return Object.keys(grouped)
       .sort()
-      .reduce((acc, category) => {
+      .reduce((acc: { [key: string]: Scenario[] }, category) => {
         acc[category] = grouped[category].sort((a, b) => a.title.localeCompare(b.title))
         return acc
-      }, {} as { [key: string]: Scenario[] })
+      }, {})
   }, [scenarios])
 
   // Initialize expanded categories state
-  const [expandedCategories, setExpandedCategories] = useState(() => {
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
     try {
       const currentCategory = currentScenario?.category || DEFAULT_CATEGORY
       const categories = Object.keys(categorizedScenarios)
