@@ -209,7 +209,7 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, scenarios]: [string, Scenario[]]) => (
+            {scenariosExpanded && (Object.entries(categorizedScenarios) as [string, Scenario[]][]).map(([category, categoryScenarios]) => (
               <div key={category} className="bg-white border-t first:border-t-0">
                 <button
                   onClick={() => toggleCategory(category)}
@@ -230,7 +230,7 @@ const Sidebar = ({
                   }
                 </button>
                 
-                {expandedCategories[category] && scenarios && scenarios.map((scenario: Scenario) => (
+                {expandedCategories[category] && categoryScenarios && categoryScenarios.map((scenario: Scenario) => (
                   <button
                     key={scenario.id}
                     className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
