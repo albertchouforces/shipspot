@@ -108,14 +108,24 @@ const Sidebar = ({
     )
   }, [currentScenario])
 
-  // Auto-select first equipment when scenario changes
+  // Auto-select first equipment when scenario changes, with improved equipment selection logic
   useEffect(() => {
-    if (currentScenario && availableEquipment.length > 0 && !selectedEquipment) {
+    if (currentScenario && availableEquipment.length > 0) {
       const firstEquipment = availableEquipment[0]
-      // Check if it's a different equipment before selecting
-      if (!selectedEquipment || firstEquipment.id !== selectedEquipment.id) {
+      
+      // Check if the currently selected equipment is still available in the new scenario
+      const isCurrentEquipmentAvailable = selectedEquipment && 
+        availableEquipment.some(eq => eq.id === selectedEquipment.id)
+
+      if (!isCurrentEquipmentAvailable) {
+        // Only select the first equipment if there's no current selection
+        // or if the current selection is not available in the new scenario
         setSelectedEquipment(firstEquipment)
       }
+      // If current equipment is available, keep it selected
+    } else if (currentScenario && availableEquipment.length === 0) {
+      // Clear selection if no equipment is available
+      setSelectedEquipment(null)
     }
   }, [currentScenario?.id, availableEquipment, selectedEquipment, setSelectedEquipment])
 
@@ -148,7 +158,9 @@ const Sidebar = ({
     if (!scenario) return
     
     onScenarioSelect(scenario)
-    setSelectedEquipment(null)
+    
+    // Don't clear equipment selection here anymore
+    // It will be handled by the useEffect above
     
     if (onResetZoom) {
       onResetZoom()
@@ -161,7 +173,7 @@ const Sidebar = ({
       })
       return newState
     })
-  }, [onScenarioSelect, onResetZoom, setSelectedEquipment])
+  }, [onScenarioSelect, onResetZoom])
 
   // Toggle category expansion
   const toggleCategory = useCallback((category: string) => {
@@ -176,7 +188,7 @@ const Sidebar = ({
     if (isHandToolActive) {
       setSelectedEquipment(null)
     }
-  }, [isHandToolActive]) // Only depend on isHandToolActive
+  }, [isHandToolActive, setSelectedEquipment])
 
   if (!Array.isArray(scenarios) || scenarios.length === 0) {
     return (
