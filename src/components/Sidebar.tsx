@@ -11,14 +11,15 @@ interface SidebarProps {
   onScenarioSelect: (scenario: Scenario) => void
   selectedEquipment: Equipment | null
   setSelectedEquipment: (equipment: Equipment | null) => void
-  showAnswer: boolean
-  onToggleAnswer: () => void
-  onDisableHandTool?: () => void
   isHandToolActive?: boolean
+  onDisableHandTool?: () => void
   onResetZoom?: () => void
   markerSize: number
   onMarkerSizeChange: (size: number) => void
   onResetMarkerSize: () => void
+  visibleLayers: { [key: string]: boolean }
+  onToggleLayer: (equipmentId: string) => void
+  onToggleAllLayers: () => void
 }
 
 const STORAGE_KEYS = {
@@ -28,7 +29,6 @@ const STORAGE_KEYS = {
 }
 
 const DEFAULT_CATEGORY = 'Halifax-class'
-const DEFAULT_SCENARIO_TITLE = '01 Deck'
 
 const Sidebar = ({
   scenarios = [],
@@ -42,6 +42,9 @@ const Sidebar = ({
   markerSize,
   onMarkerSizeChange,
   onResetMarkerSize,
+  visibleLayers,
+  onToggleLayer,
+  onToggleAllLayers,
 }: SidebarProps) => {
   // State for section expansion
   const [scenariosExpanded, setScenariosExpanded] = useState(() => {
@@ -117,7 +120,7 @@ const Sidebar = ({
         setSelectedEquipment(firstEquipment)
       }
     }
-  }, [currentScenario?.id]) // Only depend on scenario ID change, not the entire scenario object
+  }, [currentScenario?.id, availableEquipment, selectedEquipment, setSelectedEquipment])
 
   // Save states to localStorage
   useEffect(() => {
