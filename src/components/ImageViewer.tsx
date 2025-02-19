@@ -3,8 +3,6 @@ import { Marker, AnswerLayer } from '../types'
 import MarkerComponent from './MarkerComponent'
 import LayerControls from './LayerControls'
 import { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, MouseEvent as ReactMouseEvent } from 'react'
-import { equipmentTypes } from '../data/equipment'
-import * as Icons from 'lucide-react'
 
 interface ImageDimensions {
   width: number;
