@@ -1,10 +1,10 @@
-import { Eye, EyeOff, Hand, Maximize2, Trash2, ZoomIn, ZoomOut } from 'lucide-react'
-import { Marker } from '../types'
+import { Hand, Maximize2, Trash2, ZoomIn, ZoomOut } from 'lucide-react'
+import { Marker, AnswerLayer } from '../types'
 import MarkerComponent from './MarkerComponent'
+import LayerControls from './LayerControls'
 import { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, MouseEvent as ReactMouseEvent } from 'react'
-
-const ANSWER_OVERLAY_OPACITY = 0.5;
-const MARKERS_OPACITY = 1.0;
+import { equipmentTypes } from '../data/equipment'
+import * as Icons from 'lucide-react'
 
 interface ImageDimensions {
   width: number;
@@ -17,8 +17,6 @@ interface ImageDimensions {
 
 interface ImageViewerProps {
   image: string | null
-  answerImage?: string | null
-  showAnswer?: boolean
   markers: Marker[]
   onImageClick: (x: number, y: number) => void
   onMarkerRemove: (id: number) => void
@@ -26,8 +24,11 @@ interface ImageViewerProps {
   isHandToolActive: boolean
   onHandToolToggle: (active: boolean) => void
   onZoomPanChange?: (isZoomedOrPanned: boolean) => void
-  onToggleAnswer: () => void
   markerSize?: number
+  answerLayers: AnswerLayer[]
+  visibleLayers: { [key: string]: boolean }
+  onToggleLayer: (equipmentId: string) => void
+  onToggleAllLayers: () => void
 }
 
 export interface ImageViewerRef {
@@ -35,9 +36,7 @@ export interface ImageViewerRef {
 }
 
 const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({ 
-  image, 
-  answerImage,
-  showAnswer,
+  image,
   markers, 
   onImageClick, 
   onMarkerRemove, 
@@ -45,8 +44,11 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   isHandToolActive,
   onHandToolToggle,
   onZoomPanChange,
-  onToggleAnswer,
-  markerSize = 24
+  markerSize = 24,
+  answerLayers,
+  visibleLayers,
+  onToggleLayer,
+  onToggleAllLayers
 }, ref) => {
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -57,58 +59,74 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [startPanPosition, setStartPanPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
+  const isZoomedOrPannedRef = useRef(false)
 
   const isZoomedOrPanned = scale !== 1 || position.x !== 0 || position.y !== 0
 
-  // Update image dimensions when container size changes
-  const updateImageDimensions = useCallback(() => {
-    if (containerRef.current && imageRef.current) {
-      const container = containerRef.current
-      const image = imageRef.current
-      const containerRect = container.getBoundingClientRect()
-      
-      const imageAspectRatio = image.naturalWidth / image.naturalHeight
-      const containerAspectRatio = containerRect.width / containerRect.height
-      
-      let imageWidth, imageHeight, left, top
-      
-      if (imageAspectRatio > containerAspectRatio) {
-        imageWidth = containerRect.width
-        imageHeight = containerRect.width / imageAspectRatio
-        left = 0
-        top = (containerRect.height - imageHeight) / 2
-      } else {
-        imageHeight = containerRect.height
-        imageWidth = containerRect.height * imageAspectRatio
-        left = (containerRect.width - imageWidth) / 2
-        top = 0
-      }
-      
-      setImageDimensions({
-        width: imageWidth,
-        height: imageHeight,
-        left: left,
-        top: top,
-        naturalWidth: image.naturalWidth,
-        naturalHeight: image.naturalHeight
-      })
+  useEffect(() => {
+    if (onZoomPanChange && isZoomedOrPannedRef.current !== isZoomedOrPanned) {
+      isZoomedOrPannedRef.current = isZoomedOrPanned
+      onZoomPanChange(isZoomedOrPanned)
     }
+  }, [isZoomedOrPanned, onZoomPanChange])
+
+  const updateImageDimensions = useCallback(() => {
+    if (!containerRef.current || !imageRef.current) return
+
+    const container = containerRef.current
+    const image = imageRef.current
+    const containerRect = container.getBoundingClientRect()
+    
+    const imageAspectRatio = image.naturalWidth / image.naturalHeight
+    const containerAspectRatio = containerRect.width / containerRect.height
+    
+    let imageWidth, imageHeight, left, top
+    
+    if (imageAspectRatio > containerAspectRatio) {
+      imageWidth = containerRect.width
+      imageHeight = containerRect.width / imageAspectRatio
+      left = 0
+      top = (containerRect.height - imageHeight) / 2
+    } else {
+      imageHeight = containerRect.height
+      imageWidth = containerRect.height * imageAspectRatio
+      left = (containerRect.width - imageWidth) / 2
+      top = 0
+    }
+    
+    setImageDimensions({
+      width: imageWidth,
+      height: imageHeight,
+      left: left,
+      top: top,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight
+    })
   }, [])
 
   useEffect(() => {
+    let timeoutId: number | null = null
+    
     const handleResize = () => {
-      updateImageDimensions()
-      setScale(1)
-      setPosition({ x: 0, y: 0 })
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+      
+      timeoutId = window.setTimeout(() => {
+        updateImageDimensions()
+        setScale(1)
+        setPosition({ x: 0, y: 0 })
+      }, 100)
     }
 
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+      window.removeEventListener('resize', handleResize)
+    }
   }, [updateImageDimensions])
-
-  useEffect(() => {
-    onZoomPanChange?.(isZoomedOrPanned)
-  }, [isZoomedOrPanned, onZoomPanChange])
 
   const handleImageLoad = useCallback(() => {
     updateImageDimensions()
@@ -141,33 +159,26 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     const container = containerRef.current
     const containerRect = container.getBoundingClientRect()
 
-    // Get the click position relative to the container
     const containerX = clientX - containerRect.left
     const containerY = clientY - containerRect.top
 
-    // Calculate the center of the container
     const containerCenterX = containerRect.width / 2
     const containerCenterY = containerRect.height / 2
 
-    // Calculate the offset from the center, accounting for scale and pan
     const offsetX = (containerX - containerCenterX - position.x) / scale
     const offsetY = (containerY - containerCenterY - position.y) / scale
 
-    // Calculate the image bounds
     const imageLeft = imageDimensions.left
     const imageTop = imageDimensions.top
     const imageWidth = imageDimensions.width
     const imageHeight = imageDimensions.height
 
-    // Calculate the click position relative to the image's original position
     const imageX = containerCenterX + offsetX - imageLeft
     const imageY = containerCenterY + offsetY - imageTop
 
-    // Convert to percentages
     const percentX = (imageX / imageWidth) * 100
     const percentY = (imageY / imageHeight) * 100
 
-    // Validate that the click is within the image bounds
     if (percentX < 0 || percentX > 100 || percentY < 0 || percentY > 100) {
       return null
     }
@@ -175,36 +186,36 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     return { x: percentX, y: percentY }
   }, [scale, position, imageDimensions])
 
-  const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     if (isHandToolActive) {
       setIsDragging(true)
       setStartPanPosition({ x: e.clientX - position.x, y: e.clientY - position.y })
     }
-  }
+  }, [isHandToolActive, position])
 
-  const handleMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     if (isDragging && isHandToolActive) {
       const newX = e.clientX - startPanPosition.x
       const newY = e.clientY - startPanPosition.y
       const constrainedPosition = constrainPosition(newX, newY)
       setPosition(constrainedPosition)
     }
-  }
+  }, [isDragging, isHandToolActive, startPanPosition, constrainPosition])
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false)
-  }
+  }, [])
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setIsDragging(false)
     setShowToolbar(false)
-  }
+  }, [])
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     setShowToolbar(true)
-  }
+  }, [])
 
-  const handleImageClick = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const handleImageClick = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     if (isHandToolActive || isDragging || !imageDimensions) return
 
     if (toolbarRef.current?.contains(e.target as Node)) {
@@ -215,7 +226,7 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
     if (markerPosition) {
       onImageClick(markerPosition.x, markerPosition.y)
     }
-  }
+  }, [isHandToolActive, isDragging, imageDimensions, calculateMarkerPosition, onImageClick])
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -240,33 +251,33 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
       setScale(boundedScale)
       setPosition(constrainedPosition)
     }
-  }, [scale, position, constrainPosition, imageDimensions])
+  }, [scale, position, imageDimensions, constrainPosition])
 
-  const handleZoomIn = (e: ReactMouseEvent) => {
+  const handleZoomIn = useCallback((e: ReactMouseEvent) => {
     e.stopPropagation()
     const newScale = Math.min(scale * 1.2, 4)
     setScale(newScale)
     const constrainedPosition = constrainPosition(position.x, position.y)
     setPosition(constrainedPosition)
-  }
+  }, [scale, position, constrainPosition])
 
-  const handleZoomOut = (e: ReactMouseEvent) => {
+  const handleZoomOut = useCallback((e: ReactMouseEvent) => {
     e.stopPropagation()
     const newScale = Math.max(scale / 1.2, 1)
     setScale(newScale)
     const constrainedPosition = constrainPosition(position.x, position.y)
     setPosition(constrainedPosition)
-  }
+  }, [scale, position, constrainPosition])
 
-  const handleResetZoom = (e?: ReactMouseEvent) => {
+  const handleResetZoom = useCallback((e?: ReactMouseEvent) => {
     if (e) e.stopPropagation()
     setScale(1)
     setPosition({ x: 0, y: 0 })
-  }
+  }, [])
 
   useImperativeHandle(ref, () => ({
     handleResetZoom: () => handleResetZoom()
-  }))
+  }), [handleResetZoom])
 
   if (!image) {
     return (
@@ -300,7 +311,6 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
             transformOrigin: 'center'
           }}
         >
-          {/* Image wrapper to maintain aspect ratio */}
           <div className="relative" style={{ maxHeight: '100%', width: 'auto' }}>
             <img 
               ref={imageRef}
@@ -311,23 +321,24 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
               draggable={false}
               onLoad={handleImageLoad}
             />
-            {showAnswer && answerImage && (
-              <img
-                src={answerImage}
-                alt="Answer Overlay"
-                className="absolute top-0 left-0 w-full h-full object-contain pointer-events-none"
-                style={{ opacity: ANSWER_OVERLAY_OPACITY }}
-              />
-            )}
-            {/* Marker container that matches image dimensions */}
+            {/* Answer Layers */}
+            {answerLayers.map((layer) => (
+              visibleLayers[layer.equipmentId] && (
+                <img
+                  key={layer.equipmentId}
+                  src={layer.image}
+                  alt={`Answer Layer ${layer.equipmentId}`}
+                  className="absolute top-0 left-0 w-full h-full object-contain"
+                  style={{ opacity: 0.7 }}
+                />
+              )
+            ))}
             <div className="absolute top-0 left-0 w-full h-full">
               {markers.map((marker) => (
                 <MarkerComponent
                   key={marker.id}
                   marker={marker}
                   onRemove={onMarkerRemove}
-                  showAnswer={showAnswer}
-                  opacity={MARKERS_OPACITY}
                   size={markerSize}
                 />
               ))}
@@ -335,40 +346,14 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
           </div>
         </div>
 
-        {/* Answer Toggle Button */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-20">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onToggleAnswer()
-            }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg transition-all duration-200 ${
-              showAnswer 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-green-600 text-white hover:bg-green-700'
-            }`}
-          >
-            {showAnswer ? (
-              <>
-                <EyeOff size={20} />
-                <span className="font-medium">Hide Answer</span>
-              </>
-            ) : (
-              <>
-                <Eye size={20} />
-                <span className="font-medium">Show Answer</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Floating Toolbar */}
-        <div className={`absolute left-1/2 -translate-x-1/2 bottom-4 transition-opacity duration-200 ${
-          showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}>
+        {/* Controls Container at the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 mb-4">
+          {/* Quick Toolbar */}
           <div
             ref={toolbarRef}
-            className="flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
+            className={`flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg transition-opacity duration-200 ${
+              showToolbar ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
           >
             <button
               onClick={handleZoomIn}
@@ -418,11 +403,21 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
                   title="Clear All Markers"
                 >
                   <Trash2 size={20} />
-                  <span className="text-sm font-medium">Clear All Markers</span>
+                  <span className="text-sm font-medium">Clear All</span>
                 </button>
               </>
             )}
           </div>
+
+          {/* Layer Controls */}
+          {answerLayers.length > 0 && (
+            <LayerControls
+              answerLayers={answerLayers}
+              visibleLayers={visibleLayers}
+              onToggleLayer={onToggleLayer}
+              onToggleAllLayers={onToggleAllLayers}
+            />
+          )}
         </div>
       </div>
     </div>

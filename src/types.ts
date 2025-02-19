@@ -12,12 +12,17 @@ export type Marker = {
   equipment: Equipment
 }
 
+export type AnswerLayer = {
+  image: string
+  equipmentId: string // Changed from label to equipmentId
+}
+
 export type Scenario = {
   id: string
   title: string
-  category: string // Making sure category is required and documented
+  category: string
   questionImage: string | null
-  answerImage: string | null
+  answerLayers: AnswerLayer[]
   markers: Marker[]
-  availableEquipment: string[] // Array of equipment IDs that are available for this scenario
+  availableEquipment: string[]
 }

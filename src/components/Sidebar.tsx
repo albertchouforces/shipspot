@@ -1,7 +1,7 @@
 import { Equipment, Scenario } from '../types'
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import * as Icons from 'lucide-react'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { getSortedScenarios } from '../data/scenarios'
 import { equipmentTypes } from '../data/equipment'
 
@@ -24,7 +24,7 @@ interface SidebarProps {
 const STORAGE_KEYS = {
   SCENARIOS_EXPANDED: 'shipspot_scenarios_expanded',
   EQUIPMENT_EXPANDED: 'shipspot_equipment_expanded',
-  CATEGORIES_EXPANDED: 'shipspot_categories_expanded',
+  CATEGORIES_EXPANDED: 'shipspot_categories_expanded'
 }
 
 const DEFAULT_CATEGORY = 'Halifax-class'
@@ -43,15 +43,23 @@ const Sidebar = ({
   onMarkerSizeChange,
   onResetMarkerSize,
 }: SidebarProps) => {
-  // Initialize states with localStorage values
+  // State for section expansion
   const [scenariosExpanded, setScenariosExpanded] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
-    return saved ? JSON.parse(saved) : true
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.SCENARIOS_EXPANDED)
+      return saved ? JSON.parse(saved) : true
+    } catch {
+      return true
+    }
   })
   
   const [equipmentExpanded, setEquipmentExpanded] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
-    return saved ? JSON.parse(saved) : true
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.EQUIPMENT_EXPANDED)
+      return saved ? JSON.parse(saved) : true
+    } catch {
+      return true
+    }
   })
 
   // Group and sort scenarios by category
@@ -75,60 +83,43 @@ const Sidebar = ({
       }, {} as { [key: string]: Scenario[] })
   }, [scenarios])
 
-  // Initialize expanded categories state with only current category expanded
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
-    const savedCategories = localStorage.getItem(STORAGE_KEYS.CATEGORIES_EXPANDED)
-    if (savedCategories) {
-      const parsed = JSON.parse(savedCategories)
-      // On page refresh, only keep the current category expanded
+  // Initialize expanded categories state
+  const [expandedCategories, setExpandedCategories] = useState(() => {
+    try {
       const currentCategory = currentScenario?.category || DEFAULT_CATEGORY
-      const resetExpanded: { [key: string]: boolean } = {}
-      Object.keys(parsed).forEach(category => {
-        resetExpanded[category] = category === currentCategory
+      const categories = Object.keys(categorizedScenarios)
+      const initialState: { [key: string]: boolean } = {}
+      categories.forEach((category) => {
+        initialState[category] = category === currentCategory
       })
-      return resetExpanded
+      return initialState
+    } catch {
+      return {}
     }
-    
-    // Initial state with only default/current category expanded
-    const categories = Object.keys(categorizedScenarios)
-    const initialState: { [key: string]: boolean } = {}
-    categories.forEach((category) => {
-      initialState[category] = category === (currentScenario?.category || DEFAULT_CATEGORY)
-    })
-    return initialState
   })
 
-  // Select default scenario on initial load and page refresh
-  useEffect(() => {
-    if (scenarios.length > 0 && !currentScenario) {
-      const defaultScenario = scenarios.find(
-        scenario => 
-          scenario.category === DEFAULT_CATEGORY && 
-          scenario.title === DEFAULT_SCENARIO_TITLE
-      )
-      
-      if (defaultScenario) {
-        handleScenarioSelect(defaultScenario)
-        
-        // Ensure only the default category is expanded
-        const resetExpanded: { [key: string]: boolean } = {}
-        Object.keys(expandedCategories).forEach(category => {
-          resetExpanded[category] = category === DEFAULT_CATEGORY
-        })
-        setExpandedCategories(resetExpanded)
+  // Get available equipment for current scenario
+  const availableEquipment = useMemo(() => {
+    if (!currentScenario?.availableEquipment) return []
+    return equipmentTypes.filter(equipment => 
+      currentScenario.availableEquipment.includes(equipment.id)
+    )
+  }, [currentScenario])
 
-        // Select first available equipment for the default scenario
-        const firstEquipment = equipmentTypes.find(eq => 
-          defaultScenario.availableEquipment?.includes(eq.id)
-        )
-        if (firstEquipment) {
-          setSelectedEquipment(firstEquipment)
-        }
+  // Auto-select first equipment when scenario changes
+  useEffect(() => {
+    // Only select first equipment when scenario changes AND there is no selected equipment
+    // AND there are available equipment options
+    if (currentScenario && availableEquipment.length > 0 && !selectedEquipment) {
+      const firstEquipment = availableEquipment[0]
+      // Add a check to prevent selecting if the equipment is already selected
+      if (firstEquipment.id !== selectedEquipment?.id) {
+        setSelectedEquipment(firstEquipment)
       }
     }
-  }, [scenarios])
+  }, [currentScenario?.id]) // Only depend on scenario ID change, not the entire scenario object
 
-  // Persist states to localStorage
+  // Save states to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.SCENARIOS_EXPANDED, JSON.stringify(scenariosExpanded))
   }, [scenariosExpanded])
@@ -137,42 +128,23 @@ const Sidebar = ({
     localStorage.setItem(STORAGE_KEYS.EQUIPMENT_EXPANDED, JSON.stringify(equipmentExpanded))
   }, [equipmentExpanded])
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES_EXPANDED, JSON.stringify(expandedCategories))
-  }, [expandedCategories])
-
-  const availableEquipment = useMemo(() => {
-    if (!currentScenario?.availableEquipment) return []
-    return equipmentTypes.filter(equipment => 
-      currentScenario.availableEquipment.includes(equipment.id)
-    )
-  }, [currentScenario])
-
-  const handleEquipmentSelect = (equipment: Equipment) => {
+  // Handle equipment selection
+  const handleEquipmentSelect = useCallback((equipment: Equipment) => {
     if (!equipment) return
     
-    // If hand tool is active, disable it when selecting equipment
     if (isHandToolActive && onDisableHandTool) {
       onDisableHandTool()
     }
     
-    // If clicking the currently selected equipment while hand tool is active,
-    // deselect it
     if (selectedEquipment?.id === equipment.id && isHandToolActive) {
       setSelectedEquipment(null)
     } else {
       setSelectedEquipment(equipment)
     }
-  }
+  }, [isHandToolActive, onDisableHandTool, selectedEquipment, setSelectedEquipment])
 
-  // Effect to deselect equipment when hand tool is activated
-  useEffect(() => {
-    if (isHandToolActive && selectedEquipment) {
-      setSelectedEquipment(null)
-    }
-  }, [isHandToolActive, selectedEquipment, setSelectedEquipment])
-
-  const handleScenarioSelect = (scenario: Scenario) => {
+  // Handle scenario selection
+  const handleScenarioSelect = useCallback((scenario: Scenario) => {
     if (!scenario) return
     
     onScenarioSelect(scenario)
@@ -182,36 +154,35 @@ const Sidebar = ({
       onResetZoom()
     }
     
-    // Expand only the selected scenario's category
-    const resetExpanded: { [key: string]: boolean } = {}
-    Object.keys(expandedCategories).forEach(category => {
-      resetExpanded[category] = category === scenario.category
+    setExpandedCategories(prev => {
+      const newState = { ...prev }
+      Object.keys(newState).forEach(category => {
+        newState[category] = category === scenario.category
+      })
+      return newState
     })
-    setExpandedCategories(resetExpanded)
-    
-    // Select first available equipment after a brief delay
-    setTimeout(() => {
-      const firstEquipment = equipmentTypes.find(eq => 
-        scenario.availableEquipment?.includes(eq.id)
-      )
-      if (firstEquipment) {
-        setSelectedEquipment(firstEquipment)
-      }
-    }, 100)
-  }
+  }, [onScenarioSelect, onResetZoom, setSelectedEquipment])
 
-  const toggleCategory = (category: string) => {
+  // Toggle category expansion
+  const toggleCategory = useCallback((category: string) => {
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
     }))
-  }
+  }, [])
+
+  // Deselect equipment when hand tool is activated
+  useEffect(() => {
+    if (isHandToolActive && selectedEquipment) {
+      setSelectedEquipment(null)
+    }
+  }, [isHandToolActive, selectedEquipment, setSelectedEquipment])
 
   if (!Array.isArray(scenarios) || scenarios.length === 0) {
     return (
       <div className="w-64 bg-white border-r flex flex-col h-screen">
         <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">Ship Compartment Marker</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Ship Fire Systems</h2>
         </div>
         <div className="flex-1 p-4">
           <p className="text-sm text-gray-500">No scenarios available</p>
@@ -223,14 +194,13 @@ const Sidebar = ({
   return (
     <div className="w-64 bg-white border-r flex flex-col h-screen">
       <div className="p-4 border-b bg-white">
-        <h2 className="text-lg font-semibold text-gray-900">Ship Compartment Marker</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Ship Fire Systems</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-4">
-          {/* Main Sections Container */}
+          {/* Scenarios Section */}
           <div className="border rounded-lg overflow-hidden shadow-sm">
-            {/* Ships Section Header */}
             <button
               onClick={() => setScenariosExpanded(!scenariosExpanded)}
               className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -280,40 +250,42 @@ const Sidebar = ({
             })}
           </div>
 
-          {currentScenario && availableEquipment.length > 0 && (
+          {currentScenario && (
             <>
               {/* Equipment Types Section */}
-              <div className="border rounded-lg overflow-hidden shadow-sm">
-                <button
-                  onClick={() => setEquipmentExpanded(!equipmentExpanded)}
-                  className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  <span className="font-semibold text-sm text-gray-800">Compartment Types</span>
-                  {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-                
-                {equipmentExpanded && (
-                  <div className="p-2 space-y-1">
-                    {availableEquipment.map((equipment) => {
-                      const IconComponent = (Icons as any)[equipment.icon] || Icons.HelpCircle
-                      return (
-                        <button
-                          key={equipment.id}
-                          className={`w-full px-3 py-2 rounded-md flex items-start gap-2 transition-all duration-200 text-sm min-h-[2.5rem] ${
-                            selectedEquipment?.id === equipment.id
-                              ? 'bg-blue-50 text-blue-700 font-medium'
-                              : 'text-gray-600 hover:bg-gray-50'
-                          }`}
-                          onClick={() => handleEquipmentSelect(equipment)}
-                        >
-                          <IconComponent size={16} className="mt-0.5 flex-shrink-0" style={{ color: equipment.color }} />
-                          <span className="text-left leading-tight break-words">{equipment.name}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
+              {availableEquipment.length > 0 && (
+                <div className="border rounded-lg overflow-hidden shadow-sm">
+                  <button
+                    onClick={() => setEquipmentExpanded(!equipmentExpanded)}
+                    className="w-full flex items-center justify-between p-3 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <span className="font-semibold text-sm text-gray-800">Compartment Types</span>
+                    {equipmentExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  {equipmentExpanded && (
+                    <div className="p-2 space-y-1">
+                      {availableEquipment.map((equipment) => {
+                        const IconComponent = (Icons as any)[equipment.icon] || Icons.HelpCircle
+                        return (
+                          <button
+                            key={equipment.id}
+                            className={`w-full px-3 py-2 rounded-md flex items-start gap-2 transition-all duration-200 text-sm min-h-[2.5rem] ${
+                              selectedEquipment?.id === equipment.id
+                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                            onClick={() => handleEquipmentSelect(equipment)}
+                          >
+                            <IconComponent size={16} className="mt-0.5 flex-shrink-0" style={{ color: equipment.color }} />
+                            <span className="text-left leading-tight break-words">{equipment.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Marker Size Section */}
               <div className="border rounded-lg overflow-hidden shadow-sm p-3 space-y-3">

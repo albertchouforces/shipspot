@@ -14,23 +14,28 @@ const STORAGE_KEYS = {
   VERSION: 'appVersion'
 }
 
+// Default category and scenario constants (matching Sidebar.tsx)
+const DEFAULT_CATEGORY = 'Halifax-class'
+const DEFAULT_SCENARIO_TITLE = '01 Deck'
+
 function App() {
   const [scenarios, setScenarios] = useState<Scenario[]>(predefinedScenarios)
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null)
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
-  const [showAnswer, setShowAnswer] = useState(false)
   const [userProgress, setUserProgress] = useState<{ [key: string]: Marker[] }>({})
   const [isHandToolActive, setIsHandToolActive] = useState(false)
   const [markerSize, setMarkerSize] = useState(24)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [visibleLayers, setVisibleLayers] = useState<{ [key: string]: boolean }>({})
+  const hasInitialized = useRef(false)
   const imageViewerRef = useRef<{ handleResetZoom: () => void } | null>(null)
 
-  // Initialize app state with proper version check
+  // Handle initial app state initialization
   useEffect(() => {
     const initializeAppState = () => {
       try {
         // Load saved data with version check
-        const currentVersion = '1.0.1' // Update this when deploying new versions
+        const currentVersion = '1.0.1'
         const storedVersion = localStorage.getItem(STORAGE_KEYS.VERSION)
 
         // Clear all data if version mismatch
@@ -50,7 +55,7 @@ function App() {
           }
         }
 
-        // Always use predefined scenarios instead of cached ones
+        // Always use predefined scenarios
         setScenarios(predefinedScenarios)
         setIsInitialized(true)
       } catch (error) {
@@ -63,8 +68,42 @@ function App() {
       }
     }
 
-    initializeAppState()
+    if (!hasInitialized.current) {
+      initializeAppState()
+      hasInitialized.current = true
+    }
   }, [])
+
+  // Select initial scenario only once after initialization
+  useEffect(() => {
+    if (isInitialized && !currentScenario && scenarios.length > 0) {
+      // Find default scenario based on category and title
+      const defaultScenario = scenarios.find(
+        scenario => 
+          scenario.category === DEFAULT_CATEGORY && 
+          scenario.title === DEFAULT_SCENARIO_TITLE
+      )
+      
+      if (defaultScenario) {
+        setCurrentScenario(defaultScenario)
+      } else {
+        // Fallback to first scenario if default not found
+        console.warn('Default scenario not found, using first available scenario')
+        setCurrentScenario(scenarios[0])
+      }
+    }
+  }, [isInitialized, scenarios, currentScenario])
+
+  // Reset visible layers when scenario changes
+  useEffect(() => {
+    if (currentScenario) {
+      const newVisibleLayers: { [key: string]: boolean } = {}
+      currentScenario.answerLayers.forEach(layer => {
+        newVisibleLayers[layer.equipmentId] = false
+      })
+      setVisibleLayers(newVisibleLayers)
+    }
+  }, [currentScenario])
 
   // Save data to localStorage when it changes
   useEffect(() => {
@@ -118,13 +157,10 @@ function App() {
     }))
   }
 
-  const handleToggleAnswer = () => {
-    setShowAnswer(prev => !prev)
-  }
-
   const handleScenarioSelect = (scenario: Scenario) => {
     setCurrentScenario(scenario)
-    setShowAnswer(false)
+    // Store the selected scenario ID in localStorage
+    localStorage.setItem(STORAGE_KEYS.LAST_SELECTED, scenario.id)
   }
 
   const handleZoomPanChange = () => {
@@ -143,6 +179,29 @@ function App() {
 
   const handleResetMarkerSize = () => {
     setMarkerSize(24)
+  }
+
+  const handleToggleLayer = (equipmentId: string) => {
+    setVisibleLayers(prev => ({
+      ...prev,
+      [equipmentId]: !prev[equipmentId]
+    }))
+  }
+
+  const handleToggleAllLayers = () => {
+    if (!currentScenario) return
+    
+    const allVisible = currentScenario.answerLayers.every(
+      layer => visibleLayers[layer.equipmentId]
+    )
+    
+    setVisibleLayers(prev => {
+      const newState = { ...prev }
+      currentScenario.answerLayers.forEach(layer => {
+        newState[layer.equipmentId] = !allVisible
+      })
+      return newState
+    })
   }
 
   if (!isInitialized) {
@@ -164,22 +223,21 @@ function App() {
         onScenarioSelect={handleScenarioSelect}
         selectedEquipment={selectedEquipment}
         setSelectedEquipment={setSelectedEquipment}
-        showAnswer={showAnswer}
-        onToggleAnswer={handleToggleAnswer}
-        onDisableHandTool={() => setIsHandToolActive(false)}
         isHandToolActive={isHandToolActive}
+        onDisableHandTool={() => setIsHandToolActive(false)}
         onResetZoom={handleResetZoom}
         markerSize={markerSize}
         onMarkerSizeChange={handleMarkerSizeChange}
         onResetMarkerSize={handleResetMarkerSize}
+        visibleLayers={visibleLayers}
+        onToggleLayer={handleToggleLayer}
+        onToggleAllLayers={handleToggleAllLayers}
       />
       <main className="flex-1 p-6">
         {currentScenario ? (
           <ImageViewer
             ref={imageViewerRef}
             image={currentScenario.questionImage}
-            answerImage={currentScenario.answerImage}
-            showAnswer={showAnswer}
             markers={getCurrentMarkers()}
             onImageClick={handleImageClick}
             onMarkerRemove={handleRemoveMarker}
@@ -187,8 +245,11 @@ function App() {
             isHandToolActive={isHandToolActive}
             onHandToolToggle={setIsHandToolActive}
             onZoomPanChange={handleZoomPanChange}
-            onToggleAnswer={handleToggleAnswer}
             markerSize={markerSize}
+            answerLayers={currentScenario.answerLayers}
+            visibleLayers={visibleLayers}
+            onToggleLayer={handleToggleLayer}
+            onToggleAllLayers={handleToggleAllLayers}
           />
         ) : (
           <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">

@@ -6,12 +6,10 @@ import { CSSProperties } from 'react'
 interface MarkerComponentProps {
   marker: Marker
   onRemove: (id: number) => void
-  showAnswer?: boolean
-  opacity?: number
   size?: number
 }
 
-const MarkerComponent = ({ marker, onRemove, showAnswer, opacity = 1, size = 24 }: MarkerComponentProps) => {
+const MarkerComponent = ({ marker, onRemove, size = 24 }: MarkerComponentProps) => {
   // Dynamically get the icon component from lucide-react
   const IconComponent = (Icons as any)[marker.equipment.icon] || Icons.HelpCircle
 
@@ -78,8 +76,7 @@ const MarkerComponent = ({ marker, onRemove, showAnswer, opacity = 1, size = 24 
       className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
       style={{ 
         left: `${marker.x}%`,
-        top: `${marker.y}%`,
-        opacity: showAnswer ? opacity : 1
+        top: `${marker.y}%`
       }}
     >
       <div className="relative">
