@@ -6,7 +6,7 @@ import { getSortedScenarios } from '../data/scenarios'
 import { equipmentTypes } from '../data/equipment'
 
 interface SidebarProps {
-  scenarios: Scenario[]  // Explicitly typed as Scenario array
+  scenarios: Scenario[]
   currentScenario: Scenario | null
   onScenarioSelect: (scenario: Scenario) => void
   selectedEquipment: Equipment | null
@@ -31,7 +31,7 @@ const STORAGE_KEYS = {
 const DEFAULT_CATEGORY = 'Halifax-class'
 
 const Sidebar = ({
-  scenarios = [] as Scenario[],  // Explicitly type the default value
+  scenarios,
   currentScenario,
   onScenarioSelect,
   selectedEquipment,
@@ -64,6 +64,8 @@ const Sidebar = ({
 
   // Group and sort scenarios by category
   const categorizedScenarios = useMemo(() => {
+    if (!Array.isArray(scenarios)) return {}
+    
     const sortedScenarios = getSortedScenarios(scenarios)
     const grouped: { [key: string]: Scenario[] } = {}
     
@@ -207,45 +209,42 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => {
-              const isCurrentCategory = currentScenario?.category === category
-              return (
-                <div key={category} className="bg-white border-t first:border-t-0">
+            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
+              <div key={category} className="bg-white border-t first:border-t-0">
+                <button
+                  onClick={() => toggleCategory(category)}
+                  className={`w-full flex items-center justify-between p-2.5 hover:bg-gray-50 transition-colors ${
+                    currentScenario?.category === category 
+                      ? 'bg-blue-50 border-l-4 border-blue-500'
+                      : 'bg-gray-50/80 border-l-4 border-transparent'
+                  }`}
+                >
+                  <span className={`text-sm font-medium ml-1 ${
+                    currentScenario?.category === category ? 'text-blue-700' : 'text-gray-600'
+                  }`}>
+                    {category}
+                  </span>
+                  {expandedCategories[category] ? 
+                    <ChevronUp size={14} className={currentScenario?.category === category ? 'text-blue-500' : 'text-gray-400'} /> : 
+                    <ChevronDown size={14} className={currentScenario?.category === category ? 'text-blue-500' : 'text-gray-400'} />
+                  }
+                </button>
+                
+                {expandedCategories[category] && categoryScenarios && categoryScenarios.map((scenario: Scenario) => (
                   <button
-                    onClick={() => toggleCategory(category)}
-                    className={`w-full flex items-center justify-between p-2.5 hover:bg-gray-50 transition-colors ${
-                      isCurrentCategory 
-                        ? 'bg-blue-50 border-l-4 border-blue-500'
-                        : 'bg-gray-50/80 border-l-4 border-transparent'
+                    key={scenario.id}
+                    className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
+                      currentScenario?.id === scenario.id
+                        ? 'bg-blue-100 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-50'
                     }`}
+                    onClick={() => handleScenarioSelect(scenario)}
                   >
-                    <span className={`text-sm font-medium ml-1 ${
-                      isCurrentCategory ? 'text-blue-700' : 'text-gray-600'
-                    }`}>
-                      {category}
-                    </span>
-                    {expandedCategories[category] ? 
-                      <ChevronUp size={14} className={isCurrentCategory ? 'text-blue-500' : 'text-gray-400'} /> : 
-                      <ChevronDown size={14} className={isCurrentCategory ? 'text-blue-500' : 'text-gray-400'} />
-                    }
+                    {scenario.title}
                   </button>
-                  
-                  {expandedCategories[category] && categoryScenarios?.map((scenario: Scenario) => (
-                    <button
-                      key={scenario.id}
-                      className={`w-full text-left p-2 mx-2 rounded-md transition-all duration-200 text-sm break-words whitespace-normal ${
-                        currentScenario?.id === scenario.id
-                          ? 'bg-blue-100 text-blue-700 font-medium'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                      onClick={() => handleScenarioSelect(scenario)}
-                    >
-                      {scenario.title}
-                    </button>
-                  ))}
-                </div>
-              )
-            })}
+                ))}
+              </div>
+            ))}
           </div>
 
           {currentScenario && (
