@@ -142,24 +142,6 @@ export const predefinedScenarios: Scenario[] = [
     ],
     markers: [],
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid/Gallay Range Guard"]
-  },
-  {
-    id: "hwd01deck",
-    title: "01 Deck",
-    category: "Harry DeWolf-class",
-    questionImage: "images/q1.png",
-    answerLayers: [
-      {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
-      },
-      {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
-      }
-    ],
-    markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   }
 ].map(scenario => {
   const processed = ensureCategory(scenario)
