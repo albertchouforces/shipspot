@@ -173,10 +173,10 @@ const Sidebar = ({
 
   // Deselect equipment when hand tool is activated
   useEffect(() => {
-    if (isHandToolActive && selectedEquipment) {
+    if (isHandToolActive) {
       setSelectedEquipment(null)
     }
-  }, [isHandToolActive, selectedEquipment, setSelectedEquipment])
+  }, [isHandToolActive]) // Only depend on isHandToolActive
 
   if (!Array.isArray(scenarios) || scenarios.length === 0) {
     return (
