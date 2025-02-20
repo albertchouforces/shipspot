@@ -20,5 +20,5 @@ export const equipmentTypes: Equipment[] = [
   { id: 'Halon', name: 'Halon', icon: 'FireExtinguisher', color: 'green' },
   { id: 'AFFF-system', name: 'AFFF', icon: 'FireExtinguisher', color: 'blue' },
   { id: 'AFFF/Halon', name: 'AFFF/Halon', icon: 'FireExtinguisher', color: 'purple' },
-  { id: 'Quartzoid/Gallay Range Guard', name: 'Quartzoid/Gallay Range Guard', icon: 'ShowerHead', color: 'orange' },
+  { id: 'Quartzoid', name: 'Quartzoid', icon: 'ShowerHead', color: 'orange' },
 ]
