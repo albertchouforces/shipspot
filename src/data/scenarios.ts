@@ -142,34 +142,168 @@ export const predefinedScenarios: Scenario[] = [
     ],
     markers: [],
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid"]
+  },
+  {
+    id: "hwd05deck",
+    title: "05 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/05Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd04deck",
+    title: "04 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/04Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd03deck",
+    title: "03 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/03Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd02deck",
+    title: "02 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/02Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd01deck",
+    title: "01 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/01Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd1deck",
+    title: "1 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/1Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd2deck",
+    title: "2 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/2Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+  },
+  {
+    id: "hwd3deck",
+    title: "3 Deck",
+    category: "Harry DeWolf-class",
+    questionImage: "images/HDW/3Deck.png",
+    answerLayers: [
+      {
+        image: "images/a1.png",
+        equipmentId: "fire-extinguisherA"
+      },
+      {
+        image: "images/a1.png",
+        equipmentId: "hose-station"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
   }
-].map(scenario => {
-  const processed = ensureCategory(scenario)
-  // Add cache-busting query parameter to image URLs
-  return {
-    ...processed,
-    questionImage: processed.questionImage ? `${processed.questionImage}?v=${VERSION}` : null,
-    answerLayers: processed.answerLayers.map(layer => ({
-      ...layer,
-      image: `${layer.image}?v=${VERSION}`
-    }))
-  }
-})
+].map(scenario => ensureCategory(scenario))
 
-// Helper function to sort scenarios by category and title
-export const getSortedScenarios = (scenarios: Scenario[]): Scenario[] => {
-  return [...scenarios].sort((a, b) => {
-    // First sort by category
-    const categoryComparison = a.category.localeCompare(b.category)
-    if (categoryComparison !== 0) return categoryComparison
-    
-    // Then sort by title within each category
-    return a.title.localeCompare(b.title)
+// Helper function to group scenarios by category while maintaining order
+export const groupScenariosByCategory = (scenarios: Scenario[]): { [key: string]: Scenario[] } => {
+  const grouped: { [key: string]: Scenario[] } = {}
+  
+  scenarios.forEach((scenario) => {
+    if (!grouped[scenario.category]) {
+      grouped[scenario.category] = []
+    }
+    grouped[scenario.category].push(scenario)
   })
+  
+  return grouped
 }
 
-// Helper function to get unique categories from scenarios
+// Helper function to get unique categories while maintaining order
 export const getUniqueCategories = (scenarios: Scenario[]): string[] => {
-  const categories = new Set(scenarios.map(s => s.category))
-  return Array.from(categories).sort()
+  return Array.from(new Set(scenarios.map(s => s.category)))
 }
