@@ -63,11 +63,11 @@ export const predefinedScenarios: Scenario[] = [
       },
       {
         image: "images/Halifax/1DeckA-Q.png",
-        equipmentId: "Quartzoid/Gallay Range Guard"
+        equipmentId: "Quartzoid"
       }
     ],
     markers: [],
-    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid"]
   },
   {
     id: "2deck",
@@ -89,11 +89,11 @@ export const predefinedScenarios: Scenario[] = [
       },
       {
         image: "images/Halifax/2DeckA-Q.png",
-        equipmentId: "Quartzoid/Gallay Range Guard"
+        equipmentId: "Quartzoid"
       }
     ],
     markers: [],
-    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid/Gallay Range Guard"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid"]
   },
   {
     id: "3deck",
@@ -107,11 +107,11 @@ export const predefinedScenarios: Scenario[] = [
       },
       {
         image: "images/Halifax/3DeckA-Q.png",
-        equipmentId: "Quartzoid/Gallay Range Guard"
+        equipmentId: "Quartzoid"
       }
     ],
     markers: [],
-    availableEquipment: ["Halon", "Quartzoid/Gallay Range Guard"]
+    availableEquipment: ["Halon", "Quartzoid"]
   },
   {
     id: "4deck",
@@ -137,11 +137,11 @@ export const predefinedScenarios: Scenario[] = [
       },
       {
         image: "images/Halifax/4DeckA-Q.png",
-        equipmentId: "Quartzoid/Gallay Range Guard"
+        equipmentId: "Quartzoid"
       }
     ],
     markers: [],
-    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid/Gallay Range Guard"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid"]
   }
 ].map(scenario => {
   const processed = ensureCategory(scenario)

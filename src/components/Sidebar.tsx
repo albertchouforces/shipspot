@@ -2,7 +2,7 @@ import { Equipment, Scenario } from '../types'
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { getSortedScenarios } from '../data/scenarios'
+import { groupScenariosByCategory } from '../data/scenarios'
 import { equipmentTypes } from '../data/equipment'
 
 interface SidebarProps {
@@ -62,27 +62,9 @@ const Sidebar = ({
     }
   })
 
-  // Group and sort scenarios by category
+  // Group scenarios by category while maintaining order
   const categorizedScenarios = useMemo(() => {
-    if (!Array.isArray(scenarios)) return {}
-    
-    const sortedScenarios = getSortedScenarios(scenarios)
-    const grouped: { [key: string]: Scenario[] } = {}
-    
-    sortedScenarios.forEach((scenario: Scenario) => {
-      const category = scenario.category || 'Uncategorized'
-      if (!grouped[category]) {
-        grouped[category] = []
-      }
-      grouped[category].push(scenario)
-    })
-
-    return Object.keys(grouped)
-      .sort()
-      .reduce((acc: { [key: string]: Scenario[] }, category) => {
-        acc[category] = grouped[category].sort((a, b) => a.title.localeCompare(b.title))
-        return acc
-      }, {})
+    return groupScenariosByCategory(scenarios)
   }, [scenarios])
 
   // Initialize expanded categories state
@@ -108,23 +90,18 @@ const Sidebar = ({
     )
   }, [currentScenario])
 
-  // Auto-select first equipment when scenario changes, with improved equipment selection logic
+  // Auto-select first equipment when scenario changes
   useEffect(() => {
     if (currentScenario && availableEquipment.length > 0) {
       const firstEquipment = availableEquipment[0]
       
-      // Check if the currently selected equipment is still available in the new scenario
       const isCurrentEquipmentAvailable = selectedEquipment && 
         availableEquipment.some(eq => eq.id === selectedEquipment.id)
 
       if (!isCurrentEquipmentAvailable) {
-        // Only select the first equipment if there's no current selection
-        // or if the current selection is not available in the new scenario
         setSelectedEquipment(firstEquipment)
       }
-      // If current equipment is available, keep it selected
     } else if (currentScenario && availableEquipment.length === 0) {
-      // Clear selection if no equipment is available
       setSelectedEquipment(null)
     }
   }, [currentScenario?.id, availableEquipment, selectedEquipment, setSelectedEquipment])
@@ -158,9 +135,6 @@ const Sidebar = ({
     if (!scenario) return
     
     onScenarioSelect(scenario)
-    
-    // Don't clear equipment selection here anymore
-    // It will be handled by the useEffect above
     
     if (onResetZoom) {
       onResetZoom()
@@ -221,7 +195,7 @@ const Sidebar = ({
               {scenariosExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             
-            {scenariosExpanded && (Object.entries(categorizedScenarios) as [string, Scenario[]][]).map(([category, categoryScenarios]) => (
+            {scenariosExpanded && Object.entries(categorizedScenarios).map(([category, categoryScenarios]) => (
               <div key={category} className="bg-white border-t first:border-t-0">
                 <button
                   onClick={() => toggleCategory(category)}
