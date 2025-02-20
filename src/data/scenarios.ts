@@ -150,16 +150,12 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/05Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
-      },
-      {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/05DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray"]
   },
   {
     id: "hwd04deck",
@@ -168,16 +164,12 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/04Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
-      },
-      {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/04DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray"]
   },
   {
     id: "hwd03deck",
@@ -186,16 +178,16 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/03Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
+        image: "images/HDW/03DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       },
       {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/03DeckA-A.png",
+        equipmentId: "AFFF-system"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "AFFF-system"]
   },
   {
     id: "hwd02deck",
@@ -204,16 +196,16 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/02Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
+        image: "images/HDW/02DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       },
       {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/02DeckA-A.png",
+        equipmentId: "AFFF-system"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "AFFF-system"]
   },
   {
     id: "hwd01deck",
@@ -222,16 +214,12 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/01Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
-      },
-      {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/01DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray"]
   },
   {
     id: "hwd1deck",
@@ -240,16 +228,16 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/1Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
+        image: "images/HDW/1DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       },
       {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/1DeckA-Q.png",
+        equipmentId: "Quartzoid"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Quartzoid"]
   },
   {
     id: "hwd2deck",
@@ -258,16 +246,16 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/2Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
+        image: "images/HDW/2DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       },
       {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/2DeckA-H.png",
+        equipmentId: "Halon"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon"]
   },
   {
     id: "hwd3deck",
@@ -276,16 +264,16 @@ export const predefinedScenarios: Scenario[] = [
     questionImage: "images/HDW/3Deck.png",
     answerLayers: [
       {
-        image: "images/a1.png",
-        equipmentId: "fire-extinguisherA"
+        image: "images/HDW/3DeckA-M.png",
+        equipmentId: "Magazine-Flood-and-Spray"
       },
       {
-        image: "images/a1.png",
-        equipmentId: "hose-station"
+        image: "images/HDW/3DeckA-H.png",
+        equipmentId: "Halon"
       }
     ],
     markers: [],
-    availableEquipment: ["fire-extinguisherA", "fire-extinguisherB", "fire-extinguisherC", "fire-extinguisherD", "hose-station"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon"]
   }
 ].map(scenario => ensureCategory(scenario))
 
