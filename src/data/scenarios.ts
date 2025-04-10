@@ -26,6 +26,20 @@ const ensureCategory = (scenario: Partial<Scenario>): Scenario => ({
 // Predefined scenarios with consistent categorization
 export const predefinedScenarios: Scenario[] = [
   {
+    id: "02deck",
+    title: "02 Deck",
+    category: "Halifax-class",
+    questionImage: "images/Halifax/02Deck.png",
+    answerLayers: [
+      {
+        image: "images/Halifax/02DeckA-H.png",
+        equipmentId: "Halon"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["Halon"]
+  },
+  {
     id: "01deck",
     title: "01 Deck",
     category: "Halifax-class",
