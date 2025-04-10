@@ -88,12 +88,16 @@ export const predefinedScenarios: Scenario[] = [
         equipmentId: "AFFF-system"
       },
       {
+        image: "images/Halifax/2DeckA-AH.png",
+        equipmentId: "AFFF/Halon"
+      },
+      {
         image: "images/Halifax/2DeckA-Q.png",
         equipmentId: "Quartzoid"
       }
     ],
     markers: [],
-    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "Quartzoid"]
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid"]
   },
   {
     id: "3deck",
