@@ -155,7 +155,7 @@ export const predefinedScenarios: Scenario[] = [
       }
     ],
     markers: [],
-    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid"]
+    availableEquipment: ["AFFF/Halon"]
   },
   {
     id: "hwd05deck",
