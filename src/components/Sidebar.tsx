@@ -298,7 +298,7 @@ const Sidebar = ({
               {/* Help Text */}
               <div className="bg-amber-50 border rounded-lg p-3">
                 <p className="text-xs text-amber-700">
-                  Select a Deck and Marker type. Click on the image to place markers, use the Answer Key to test your knowledge or as a reference.
+                  Select a Deck and Marker type. Click on the image to place markers, use the Answer Key to test your knowledge or use as a reference.
                 </p>
               </div>
             </>
