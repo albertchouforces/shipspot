@@ -16,7 +16,7 @@ const STORAGE_KEYS = {
 
 // Default category and scenario constants (matching Sidebar.tsx)
 const DEFAULT_CATEGORY = 'Halifax-class'
-const DEFAULT_SCENARIO_TITLE = '02 Deck'
+const DEFAULT_SCENARIO_TITLE = '01 Deck'
 
 function App() {
   const [scenarios, setScenarios] = useState<Scenario[]>(predefinedScenarios)
@@ -27,6 +27,7 @@ function App() {
   const [markerSize, setMarkerSize] = useState(24)
   const [isInitialized, setIsInitialized] = useState(false)
   const [visibleLayers, setVisibleLayers] = useState<{ [key: string]: boolean }>({})
+  const [showHelpTooltip, setShowHelpTooltip] = useState(true)
   const hasInitialized = useRef(false)
   const imageViewerRef = useRef<{ handleResetZoom: () => void } | null>(null)
 
@@ -55,6 +56,9 @@ function App() {
           }
         }
 
+        // Always show help tooltip on refresh (no localStorage check)
+        setShowHelpTooltip(true)
+        
         // Always use predefined scenarios
         setScenarios(predefinedScenarios)
         setIsInitialized(true)
@@ -64,6 +68,7 @@ function App() {
         setScenarios(predefinedScenarios)
         setUserProgress({})
         setMarkerSize(24)
+        setShowHelpTooltip(true)
         setIsInitialized(true)
       }
     }
@@ -117,6 +122,11 @@ function App() {
       localStorage.setItem(STORAGE_KEYS.MARKER_SIZE, String(markerSize))
     }
   }, [markerSize, isInitialized])
+
+  const handleDismissHelpTooltip = () => {
+    setShowHelpTooltip(false)
+    // Removed localStorage saving to make tooltip show on each refresh
+  }
 
   const getCurrentMarkers = () => {
     if (!currentScenario) return []
@@ -250,6 +260,8 @@ function App() {
             visibleLayers={visibleLayers}
             onToggleLayer={handleToggleLayer}
             onToggleAllLayers={handleToggleAllLayers}
+            showHelpTooltip={showHelpTooltip}
+            onDismissHelpTooltip={handleDismissHelpTooltip}
           />
         ) : (
           <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">

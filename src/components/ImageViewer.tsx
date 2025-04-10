@@ -2,6 +2,7 @@ import { Hand, Maximize2, Trash2, ZoomIn, ZoomOut } from 'lucide-react'
 import { Marker, AnswerLayer } from '../types'
 import MarkerComponent from './MarkerComponent'
 import LayerControls from './LayerControls'
+import HelpTooltip from './HelpTooltip'
 import { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle, MouseEvent as ReactMouseEvent } from 'react'
 
 interface ImageDimensions {
@@ -27,6 +28,8 @@ interface ImageViewerProps {
   visibleLayers: { [key: string]: boolean }
   onToggleLayer: (equipmentId: string) => void
   onToggleAllLayers: () => void
+  showHelpTooltip: boolean
+  onDismissHelpTooltip: () => void
 }
 
 export interface ImageViewerRef {
@@ -46,7 +49,9 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
   answerLayers,
   visibleLayers,
   onToggleLayer,
-  onToggleAllLayers
+  onToggleAllLayers,
+  showHelpTooltip,
+  onDismissHelpTooltip
 }, ref) => {
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -321,6 +326,12 @@ const ImageViewer = forwardRef<ImageViewerRef, ImageViewerProps>(({
         onMouseEnter={handleMouseEnter}
         onWheel={handleWheel}
       >
+        {/* Help Tooltip */}
+        <HelpTooltip 
+          isVisible={showHelpTooltip} 
+          onDismiss={onDismissHelpTooltip} 
+        />
+
         <div
           className="absolute w-full h-full flex items-center justify-center transition-transform duration-100 ease-out select-none"
           style={{
