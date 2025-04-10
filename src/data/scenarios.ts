@@ -144,6 +144,20 @@ export const predefinedScenarios: Scenario[] = [
     availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid"]
   },
   {
+    id: "5deck",
+    title: "5 Deck",
+    category: "Halifax-class",
+    questionImage: "images/Halifax/5Deck.png",
+    answerLayers: [
+      {
+        image: "images/Halifax/5DeckA-AH.png",
+        equipmentId: "AFFF/Halon"
+      }
+    ],
+    markers: [],
+    availableEquipment: ["Magazine-Flood-and-Spray", "Halon", "AFFF-system", "AFFF/Halon", "Quartzoid"]
+  },
+  {
     id: "hwd05deck",
     title: "05 Deck",
     category: "Harry DeWolf-class",
